@@ -11,6 +11,7 @@ import requests
 import io
 import csv
 import json
+from werkzeug.utils import secure_filename
 
 from icecream import ic
 ic.configureOutput(prefix=f'----- | ', includeContext=True)
@@ -311,6 +312,28 @@ def api_create_post():
         post = x.validate_post(request.form.get("post", ""))
         post_pk = uuid.uuid4().hex
         post_image_path = ""
+        
+        # Handle file upload
+        if 'post_file' in request.files:
+            file = request.files['post_file']
+            if file and file.filename:
+                # Validate file
+                allowed_extensions = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+                file_ext = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else ''
+                
+                if file_ext in allowed_extensions:
+                    # Generate unique filename
+                    from werkzeug.utils import secure_filename
+                    original_filename = secure_filename(file.filename)
+                    unique_filename = f"{uuid.uuid4().hex}_{original_filename}"
+                    
+                    # Save file
+                    file_path = os.path.join('static/images', unique_filename)
+                    file.save(file_path)
+                    
+                    # Store just the filename for database
+                    post_image_path = unique_filename
+        
         db, cursor = x.db()
         q = "INSERT INTO posts VALUES(%s, %s, %s, %s, %s)"
         cursor.execute(q, (post_pk, user_pk, post, 0, post_image_path))
@@ -322,6 +345,7 @@ def api_create_post():
             "user_username": user["user_username"],
             "user_avatar_path": user["user_avatar_path"],
             "post_message": post,
+            "post_image_path": post_image_path,
         }
         html_post_container = render_template("___post_container.html")
         html_post = render_template("_tweet.html", tweet=tweet)
@@ -338,6 +362,11 @@ def api_create_post():
         if "x-error post" in str(ex):
             toast_error = render_template("___toast_error.html", message=f"Post - {x.POST_MIN_LEN} to {x.POST_MAX_LEN} characters")
             return f"""<browser mix-bottom="#toast">{toast_error}</browser>"""
+        
+        # File upload errors
+        if "x-error file" in str(ex):
+            toast_error = render_template("___toast_error.html", message="Invalid file type. Only images allowed.")
+            return f"""<browser mix-bottom="#toast">{toast_error}</browser>"""
 
         # System or developer error
         toast_error = render_template("___toast_error.html", message="System under maintenance")
@@ -345,7 +374,7 @@ def api_create_post():
 
     finally:
         if "cursor" in locals(): cursor.close()
-        if "db" in locals(): db.close()   
+        if "db" in locals(): db.close()
 
 ##############################
 @app.route("/api-update-post", methods=["POST"])
