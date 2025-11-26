@@ -612,6 +612,7 @@ def api_update_profile():
                 file.save(os.path.join(images_dir, filename))
                 new_src = url_for('static', filename=f"images/{filename}") + f"?v={int(time.time())}"
 
+        # Connect to the database
         q = (
             "UPDATE users SET user_email = %s, user_username = %s, user_first_name = %s, "
             "user_avatar_path = COALESCE(%s, user_avatar_path) WHERE user_pk = %s"
