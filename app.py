@@ -507,14 +507,14 @@ def api_update_profile():
         UPDATE users
         SET user_email = %s,
             user_username = %s,
-            user_first_name = %s
-            user_first_name = %s
+            user_first_name = %s,
+            user_last_name = %s
         WHERE user_pk = %s
         """
 
         db, cursor = x.db()
         # Avatar is handled in /api-upload-avatar; pass None to keep current value via COALESCE
-        cursor.execute(q, (user_email, user_username, user_first_name, None, user["user_pk"]))
+        cursor.execute(q, (user_email, user_username, user_first_name, user_last_name, user["user_pk"]))
         db.commit()
 
         # Update session minimally
