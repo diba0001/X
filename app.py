@@ -379,7 +379,7 @@ def api_create_post():
         if "cursor" in locals(): cursor.close()
         if "db" in locals(): db.close()
 
-##############################
+###################################
 @app.route("/api-delete-post/<post_pk>", methods=["DELETE"])
 def api_delete_post(post_pk):
     try:
@@ -387,9 +387,6 @@ def api_delete_post(post_pk):
         if not user: 
             toast_error = render_template("___toast_error.html", message="You must be logged in")
             return f"""<browser mix-bottom="#toast">{toast_error}</browser>""", 401
-        
-        # Validate post_pk
-        post_pk = x.validate_uuid4_without_dashes(post_pk)
         
         db, cursor = x.db()
         
@@ -399,7 +396,8 @@ def api_delete_post(post_pk):
         post = cursor.fetchone()
         
         if not post:
-            raise Exception("Post not found or you don't have permission", 403)
+            toast_error = render_template("___toast_error.html", message="Post not found or unauthorized")
+            return f"""<browser mix-bottom="#toast">{toast_error}</browser>""", 403
         
         # Delete image file if exists
         if post["post_image_path"]:
@@ -412,11 +410,13 @@ def api_delete_post(post_pk):
         cursor.execute(q, (post_pk,))
         db.commit()
         
-        toast_ok = render_template("___toast_ok.html", message="Post deleted successfully!")
+        toast_ok = render_template("___toast_ok.html", message="Post deleted!")
+        
+        # Return proper mixhtml response
         return f"""
-            <browser mix-bottom="#toast">{toast_ok}</browser>
-            <browser mix-remove="#post_{post_pk}"></browser>
-        """
+<browser mix-bottom="#toast">{toast_ok}</browser>
+<browser mix-remove="#post_{post_pk}"></browser>
+        """.strip()
         
     except Exception as ex:
         ic(ex)
