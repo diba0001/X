@@ -130,6 +130,17 @@ INSERT INTO `posts` (`post_pk`, `post_user_fk`, `post_message`, `post_total_like
 ('efaf8b6f98be4a7b8cc7a75d0f83578c', '225a9fc15b8f409aa5c8ee7eafee516b', 'test', 0, '', '2025-11-19 15:37:06'),
 ('f29a8c8259c449a28773153bc0b2d0af', '4d2fcca97ea24b3d9f91e986d0c7f42a', 'This is a post I want to delete', 0, '', '2025-11-19 15:37:06'),
 ('ff4053ee078c4b3d84d00f7ddd171058', '4d2fcca97ea24b3d9f91e986d0c7f42a', 'Does it work?', 0, '', '2025-11-19 15:37:06');
+INSERT INTO `posts` (`post_pk`, `post_user_fk`, `post_message`, `post_total_likes`, `post_image_path`) VALUES
+('1e5ecc804e1f46bc8e723437bf4bfc4b', '225a9fc15b8f409aa5c8ee7eafee516b', 'And this just works!', 1, 'post_3.jpg'),
+('28dd4c1671634d73acd29a0ab109bef1', '805a39cd8c854ee8a83555a308645bf5', 'My first super life !', 1, 'post_3.jpg'),
+('299323cf81924589b0de265e715a1f9e', '225a9fc15b8f409aa5c8ee7eafee516b', 'test3', 1, 'post_1.jpg'),
+('7d6f40e626c54efaa32494bce5f739d7', '88a93bb5267e443eb0047f421a7a2f34', 'test', 1, 'post_2.jpg'),
+('1e5ecc804e1f46bc8e723437bf4bfc4b', '225a9fc15b8f409aa5c8ee7eafee516b', 'And this just works!', 1, 'post_3.jpg'),
+('28dd4c1671634d73acd29a0ab109bef1', '805a39cd8c854ee8a83555a308645bf5', 'My first super life !', 1, 'post_3.jpg'),
+('299323cf81924589b0de265e715a1f9e', '225a9fc15b8f409aa5c8ee7eafee516b', 'test3', 1, 'post_1.jpg'),
+('7d6f40e626c54efaa32494bce5f739d7', '88a93bb5267e443eb0047f421a7a2f34', 'test', 1, 'post_2.jpg'),
+('99fefea24ea5419da19ed1f8cf8e9499', '225a9fc15b8f409aa5c8ee7eafee516b', 'wow', 0, 'post_1.jpg'),
+('bcaa6df8880e411a9c25deaafae2314a', '225a9fc15b8f409aa5c8ee7eafee516b', 'test4', 2, '');
 
 -- --------------------------------------------------------
 
@@ -188,35 +199,7 @@ INSERT INTO `users` (`user_pk`, `user_email`, `user_password`, `user_username`, 
 --
 
 --
--- Indexes for table `likes`
---
-ALTER TABLE `likes`
-  ADD PRIMARY KEY (`like_user_fk`,`like_post_fk`),
-  ADD KEY `like_post_fk` (`like_post_fk`);
-
---
--- Indexes for table `likes`
---
-ALTER TABLE `likes`
-  ADD PRIMARY KEY (`like_user_fk`,`like_post_fk`),
-  ADD KEY `like_post_fk` (`like_post_fk`);
-
---
--- Indexes for table `likes`
---
-ALTER TABLE `likes`
-  ADD PRIMARY KEY (`like_user_fk`,`like_post_fk`),
-  ADD KEY `like_post_fk` (`like_post_fk`);
-
---
--- Indexes for table `likes`
---
-ALTER TABLE `likes`
-  ADD PRIMARY KEY (`like_user_fk`,`like_post_fk`),
-  ADD KEY `like_post_fk` (`like_post_fk`);
-
---
--- Indeks for tabel `posts`
+-- Indexes for table `posts`
 --
 ALTER TABLE `posts`
   ADD PRIMARY KEY (`post_pk`),
@@ -252,13 +235,6 @@ ALTER TABLE `likes`
 -- Constraints for dumped tables
 --
 
---
--- Constraints for table `likes`
---
-ALTER TABLE `likes`
-  ADD CONSTRAINT `likes_ibfk_1` FOREIGN KEY (`like_user_fk`) REFERENCES `users` (`user_pk`) ON DELETE CASCADE,
-  ADD CONSTRAINT `likes_ibfk_2` FOREIGN KEY (`like_post_fk`) REFERENCES `posts` (`post_pk`) ON DELETE CASCADE;
-COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
