@@ -1,4 +1,5 @@
-<article class="post" mix-fade-in="5000">
+<!-- <article class="post" mix-fade-in="5000"> -->
+<article class="post">
     <img src="/{{ tweet.user_avatar_path if tweet.user_avatar_path else 'static/images/avatars/unknown.jpg' }}"
         alt="Profile Picture" class="w-8 h-8 rounded-full">
     <div class="post-content">
@@ -41,7 +42,7 @@
                     style="border: 1px solid black;">
                     <input type="hidden" name="post_pk" value="{{ tweet.post_pk }}">
                     <button type="submit" class="text-c-black cursor-pointer">
-                        Unblock
+                        {{ x.lans("admin_unblock") }}
                     </button>
                 </form>
                 {% else %}
@@ -50,7 +51,7 @@
                     style="border: 1px solid black;">
                     <input type="hidden" name="post_pk" value="{{ tweet.post_pk }}">
                     <button type="submit" class="text-c-white cursor-pointer">
-                        Block
+                        {{ x.lans("admin_block") }}
                     </button>
                 </form>
                 {% endif %}

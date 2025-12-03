@@ -500,7 +500,7 @@ def api_admin_block_user():
           <form id=\"admin_btn_{username}\" action=\"{url_for('api_admin_unblock_user')}\" mix-post class=\"d-flex a-items-center\"> 
             <input type=\"hidden\" name=\"user_username\" value=\"{username}\"> 
             <input type=\"hidden\" name=\"user_pk\" value=\"{user_pk}\"> 
-            <button class=\"px-4 py-1 text-c-black bg-c-white rounded-lg cursor-pointer\" type=\"submit\" style=\"border: 1px solid black;\">Unblock</button>
+            <button class=\"px-4 py-1 text-c-black bg-c-white rounded-lg cursor-pointer\" type=\"submit\" style=\"border: 1px solid black;\">{x.lans('admin_unblock')}</button>
           </form>
         """
         toast_ok = render_template("___toast_ok.html", message="User blocked")
@@ -552,7 +552,7 @@ def api_admin_unblock_user():
           <form id=\"admin_btn_{username}\" action=\"{url_for('api_admin_block_user')}\" mix-post class=\"d-flex a-items-center\"> 
             <input type=\"hidden\" name=\"user_username\" value=\"{username}\"> 
             <input type=\"hidden\" name=\"user_pk\" value=\"{user_pk}\"> 
-            <button class=\"px-4 py-1 text-c-white bg-c-black rounded-lg cursor-pointer\" type=\"submit\" style=\"border: 1px solid black;\">Block</button>
+            <button class=\"px-4 py-1 text-c-white bg-c-black rounded-lg cursor-pointer\" type=\"submit\" style=\"border: 1px solid black;\">{x.lans('admin_block')}</button>
           </form>
         """
         toast_ok = render_template("___toast_ok.html", message="User unblocked")
@@ -1142,6 +1142,7 @@ def get_data_from_sheet():
         # In the link, find the ID of the sheet. Here: 1aPqzumjNp0BwvKuYPBZwel88UO-OC_c9AEMFVsCw1qU
         # Replace the ID in the 2 places bellow
         url= f"https://docs.google.com/spreadsheets/d/{x.google_spread_sheet_key}/export?format=csv&id={x.google_spread_sheet_key}"
+        # url = f"https://docs.google.com/spreadsheets/d/{x.google_spread_sheet_key}/export?format=csv&gid=0"
         res=requests.get(url=url)
         # ic(res.text) # contains the csv text structure
         csv_text = res.content.decode('utf-8')
