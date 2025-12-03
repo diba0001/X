@@ -683,3 +683,14 @@ p{
 .x-dialog__alt a:hover {
   text-decoration: underline;
 }
+
+.modal-hidden {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+}
+
+.modal-visible {
+    opacity: 1;
+    pointer-events: auto;
+}
