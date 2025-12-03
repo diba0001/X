@@ -394,6 +394,7 @@ def admin_users_section():
         cursor.execute(q)
         users = cursor.fetchall()
 
+        nav_html = render_template("___admin_nav.html")
         content_html = render_template("_admin_users.html", users=users, user=user, x=x)
 
         return f"""
