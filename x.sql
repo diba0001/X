@@ -54,11 +54,24 @@ CREATE TABLE `likes` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Data dump for tabellen `likes`
+-- Triggers `likes`
 --
-
-INSERT INTO `likes` (`like_user_fk`, `like_post_fk`, `like_timestamp`) VALUES
-('9860c6174a3141c5b1e7c8b3638b2f2b', '299323cf81924589b0de265e715a1f9e', 1763551080);
+DELIMITER $$
+CREATE TRIGGER `after_like_delete` AFTER DELETE ON `likes` FOR EACH ROW BEGIN
+    UPDATE `posts` 
+    SET `post_total_likes` = GREATEST(0, CAST(`post_total_likes` AS SIGNED) - 1)
+    WHERE `post_pk` = OLD.like_post_fk;
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `after_like_insert` AFTER INSERT ON `likes` FOR EACH ROW BEGIN
+    UPDATE `posts` 
+    SET `post_total_likes` = `post_total_likes` + 1 
+    WHERE `post_pk` = NEW.like_post_fk;
+END
+$$
+DELIMITER ;
 
 -- --------------------------------------------------------
 
