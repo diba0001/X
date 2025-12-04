@@ -23,7 +23,9 @@ app.config['MAX_CONTENT_LENGTH'] = 1 * 1024 * 1024   # 1 MB
 app.config['SESSION_TYPE'] = 'filesystem'
 Session(app)
  
- 
+ITEMS_TO_SHOW = 4
+ITEMS_TO_FETCH = ITEMS_TO_SHOW + 1
+
 ##############################
 @app.before_request
 def load_g_user():
@@ -139,14 +141,16 @@ def signup(lan = "english"):
             user_verification_key = uuid.uuid4().hex
             user_verified_at = 0
             user_deleted_at = 0
+            user_is_admin = 0
+            user_blocked_at = 0
 
             user_hashed_password = generate_password_hash(user_password)
 
             # Connect to the database
-            q = "INSERT INTO users VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            q = "INSERT INTO users VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
             db, cursor = x.db()
             cursor.execute(q, (user_pk, user_email, user_hashed_password, user_username, 
-            user_first_name, user_last_name, user_avatar_path, user_verification_key, user_verified_at, user_deleted_at))
+            user_first_name, user_last_name, user_avatar_path, user_verification_key, user_verified_at, user_deleted_at, user_is_admin, user_blocked_at))
             db.commit()
 
             # send verification email
@@ -188,28 +192,29 @@ def home():
         user = session.get("user", "")
         if not user: return redirect(url_for("login"))
         user_pk = user["user_pk"]
-        
-        db, cursor = x.db()
+        next_page = 2
 
-        # Fetch tweets, total likes, and current user's like status in one query
-        q = """
-            SELECT 
-                p.post_pk, p.post_message, p.post_image_path, p.post_total_likes, 
-                u.user_first_name, u.user_last_name, u.user_username, u.user_avatar_path,
-                (SELECT COUNT(*) FROM likes WHERE like_post_fk = p.post_pk AND like_user_fk = %s) AS is_liked_by_user
-            FROM posts p
-            JOIN users u ON u.user_pk = p.post_user_fk 
-            WHERE p.post_blocked_at = 0
-            ORDER BY RAND() LIMIT 5
-        """
-        cursor.execute(q, (user_pk,))
-        tweets = cursor.fetchall()
+        db, cursor = x.db()
+        tweets = x.get_tweets(cursor, user["user_pk"], 0, ITEMS_TO_SHOW)
+        # # Fetch tweets, total likes, and current user's like status in one query
+        # q = """
+        #     SELECT 
+        #         p.post_pk, p.post_message, p.post_image_path, p.post_total_likes, 
+        #         u.user_first_name, u.user_last_name, u.user_username, u.user_avatar_path,
+        #         (SELECT COUNT(*) FROM likes WHERE like_post_fk = p.post_pk AND like_user_fk = %s) AS is_liked_by_user
+        #     FROM posts p
+        #     JOIN users u ON u.user_pk = p.post_user_fk 
+        #     WHERE p.post_blocked_at = 0
+        #     ORDER BY RAND() LIMIT 5
+        # """
+        # cursor.execute(q, (user_pk,))
+        # tweets = cursor.fetchall()
         
-        # Convert the count to a boolean for template logic
-        for tweet in tweets:
-            tweet['is_liked_by_user'] = True if tweet['is_liked_by_user'] > 0 else False
+        # # Convert the count to a boolean for template logic
+        # for tweet in tweets:
+        #     tweet['is_liked_by_user'] = True if tweet['is_liked_by_user'] > 0 else False
             
-        # ic(tweets)
+        # # ic(tweets)
 
         q = "SELECT * FROM trends ORDER BY RAND() LIMIT 3"
         cursor.execute(q)
@@ -252,7 +257,7 @@ def home():
 
         lan = session["user"]["user_language"]
 
-        return render_template("home.html", lan=lan, dictionary=dictionary, tweets=tweets, trends=trends, suggestions=suggestions, following=following, user=user)
+        return render_template("home.html", lan=lan, dictionary=dictionary, trends=trends, suggestions=suggestions, following=following, user=user, tweets=tweets, next_page=next_page)
     except Exception as ex:
         ic(ex)
         return "error"
@@ -299,18 +304,18 @@ def logout():
 
 
 
-##############################
 @app.get("/home-comp")
 def home_comp():
     try:
-
         user = session.get("user", "")
         if not user: return "error"
+        
         db, cursor = x.db()
-        q = "SELECT * FROM users JOIN posts ON user_pk = post_user_fk ORDER BY RAND() LIMIT 5"
-        cursor.execute(q)
-        tweets = cursor.fetchall()
-        # ic(tweets)
+
+        # --- USE THE HELPER ---
+        # Fetch the first page of tweets (offset 0)
+        tweets = x.get_tweets(cursor, user["user_pk"], 0, ITEMS_TO_SHOW)
+        # ----------------------
 
         html = render_template("_home_comp.html", tweets=tweets, user=user)
         return f"""<browser mix-update="main">{ html }</browser>"""
@@ -318,8 +323,58 @@ def home_comp():
         ic(ex)
         return "error"
     finally:
-        pass
+        if "cursor" in locals(): cursor.close()
+        if "db" in locals(): db.close()
 
+##############################
+@app.get("/api-get-posts")
+def api_get_posts():
+    try:
+        # 1. Get current user for 'is_liked' logic
+        user = session.get("user")
+        if not user: return "Access denied", 403
+        user_pk = user["user_pk"]
+
+        next_page = int(request.args.get("page", "1"))
+        ic(next_page)
+        
+        sql_offset = (next_page - 1) * ITEMS_TO_SHOW
+        
+        db, cursor = x.db()
+        
+        items = x.get_tweets(cursor, user_pk, sql_offset, ITEMS_TO_FETCH)
+        ic(items)
+
+        has_more_items = len(items) == ITEMS_TO_FETCH
+        
+        items_to_render = items[:ITEMS_TO_SHOW]
+        
+        container = ""
+        for item in items_to_render:
+            # 3. Convert is_liked_by_user to boolean (just like in home route)
+            item['is_liked_by_user'] = True if item['is_liked_by_user'] > 0 else False
+            
+            # 4. FIXED: Changed 'post=item' to 'tweet=item'
+            html_item = render_template("_tweet.html", tweet=item, user=user)
+            container = container + html_item
+        ic(container)
+
+        new_hyperlink = (render_template("___show_more.html", next_page=next_page + 1) if has_more_items else "")
+
+        return f"""
+        <mix-html mix-bottom="#posts">
+            {container}
+        </mix-html>
+        <mix-html mix-replace="#show_more">
+            {new_hyperlink}
+        </mix-html>
+        """
+    except Exception as ex:
+        ic(ex)
+        return "error"
+    finally:
+        if "cursor" in locals(): cursor.close()
+        if "db" in locals(): db.close()
 
 ##############################
 @app.get("/profile")

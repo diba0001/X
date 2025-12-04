@@ -171,3 +171,24 @@ def send_email(to_email, subject, template):
         raise Exception("cannot send email", 500)
     finally:
         pass
+
+def get_tweets(cursor, user_pk, offset, limit):
+    q = """
+        SELECT 
+            p.*, 
+            u.user_first_name, u.user_last_name, u.user_username, u.user_avatar_path,
+            (SELECT COUNT(*) FROM likes WHERE like_post_fk = p.post_pk AND like_user_fk = %s) AS is_liked_by_user
+        FROM posts p
+        JOIN users u ON u.user_pk = p.post_user_fk 
+        WHERE p.post_blocked_at = 0
+        ORDER BY p.post_pk DESC
+        LIMIT %s, %s
+    """
+    cursor.execute(q, (user_pk, offset, limit))
+    tweets = cursor.fetchall()
+
+    # Normalize data
+    for tweet in tweets:
+        tweet['is_liked_by_user'] = True if tweet['is_liked_by_user'] > 0 else False
+    
+    return tweets
