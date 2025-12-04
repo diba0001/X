@@ -143,6 +143,7 @@ def signup(lan = "english"):
             user_blocked_at = 0
 
             user_hashed_password = generate_password_hash(user_password)
+            verification_link = f"http://127.0.0.1:800/verify-account?key={user_verification_key}"
 
             # Connect to the database
             q = "INSERT INTO users VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
@@ -152,9 +153,9 @@ def signup(lan = "english"):
             db.commit()
 
             # send verification email
-            email_verify_account = render_template("_email_verify_account.html", user_verification_key=user_verification_key)
+            email_verify_account = render_template("_email_verify_account.html", verification_link=verification_link, lans=lan)
             # ic(email_verify_account)
-            x.send_email(user_email, "Verify your account", email_verify_account)
+            x.send_email(user_email, x.lans('verify_your_account'), email_verify_account)
 
             return f"""<mixhtml mix-redirect="{ url_for('login') }"></mixhtml>""", 400
         except Exception as ex:
