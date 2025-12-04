@@ -1,5 +1,4 @@
 from flask import Flask, render_template, request, session, redirect, url_for, jsonify, g
-from flask import Flask, render_template, request, session, redirect, url_for, jsonify, g
 from flask_session import Session
 from werkzeug.security import generate_password_hash
 from werkzeug.security import check_password_hash
@@ -194,6 +193,9 @@ def home():
     try:
         user = session.get("user", "")
         if not user: return redirect(url_for("login"))
+
+        user_pk = user["user_pk"]
+        
         db, cursor = x.db()
 
         # Fetch tweets, total likes, and current user's like status in one query
