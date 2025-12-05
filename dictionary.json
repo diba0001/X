@@ -181,7 +181,7 @@
     },
     "what_is_happening_now": {
         "english": "What is happening now",
-        "danish": "Nyheder",
+        "danish": "Hvad vil du dele",
         "spanish": "Qué está pasando ahora"
     },
     "follow": {
@@ -191,7 +191,7 @@
     },
     "unfollow": {
         "english": "Unfollow",
-        "danish": "Fjern følg",
+        "danish": "Fjern følger",
         "spanish": "Dejar de seguir"
     },
     "show_more": {
@@ -253,6 +253,11 @@
         "english": "Search for sports, politics, people...",
         "danish": "Søg på sport, politik, personer...",
         "spanish": "Busca por deporte, política, personas…"
+    },
+    "verify_your_account": {
+        "english": "Verify your account",
+        "danish": "Verificer din konto",
+        "spanish": "Verificar tu cuenta"
     },
     "welcome_to_x": {
         "english": "Welcome to X",
@@ -372,7 +377,7 @@
     "remove": {
         "english": "Fjern",
         "danish": "Remove",
-        "spanish": "Remova"
+        "spanish": "Quitar"
     },
     "this_cant_be_undone": {
         "english": "This cannot be reverted.",

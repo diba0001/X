@@ -79,9 +79,9 @@
 
 
                     {% if user and user.user_pk == tweet.post_user_fk %}
-                    <form action="/api-delete-post/{{ tweet.post_pk }}" mix-delete style="display:inline" class="action"
+                    <form action="/api-delete-post/{{ tweet.post_pk }}" mix-delete style="display:contents"
                         mix-delay="3000" mix-await="{{ x.lans('deleting') }}...">
-                        <button type="submit" class="action text-c-red" class="text-c-red" hover="cursor-pointer">
+                        <button type="submit" class="action text-c-red" hover="cursor-pointer">
                             <i class="fa-solid fa-trash"></i>
                         </button>
                     </form>
