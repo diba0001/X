@@ -35,6 +35,116 @@ def load_g_user():
 
 
 ##############################
+@app.route("/forgot-password", methods=["GET", "POST"])
+@app.route("/forgot-password/<lan>", methods=["GET", "POST"])
+def forgot_password(lan = "english"):
+    try:
+        # language handling (used for flags and translations)
+        if lan not in x.allowed_languages:
+            lan = "english"
+        x.default_language = lan
+        if request.method == "GET":
+            return render_template("forgot_password.html", lan=lan)
+
+        if request.method == "POST":
+            user_email = x.validate_user_email(lan)
+            reset_key = uuid.uuid4().hex
+
+            db, cursor = x.db()
+            q = "UPDATE users SET user_password_reset_key = %s WHERE user_email = %s"
+            cursor.execute(q, (reset_key, user_email))
+            db.commit()
+
+            # Build absolute link and inline a personalized email HTML
+            base_url = request.host_url.rstrip('/')
+            reset_url = f"{base_url}/create-new-password/{lan}?key={reset_key}"
+
+            # Fetch username for greeting
+            try:
+                cursor.execute("SELECT user_username FROM users WHERE user_email = %s", (user_email,))
+                row_user = cursor.fetchone() or {}
+                user_username = row_user.get("user_username", "")
+            except Exception:
+                user_username = ""
+
+            subject = "Create a new password"
+            body = f"""
+            <p>Hello {user_username},</p>
+            <p>You requested to update your password.</p>
+            <p>Click the link below to create a new password:</p>
+            <p><a href=\"{reset_url}\">Create new password</a></p>
+            <p>If you didn't request this, you can safely ignore this email.</p>
+            """
+
+            try:
+                x.send_email(user_email, subject, body)
+            except Exception as email_ex:
+                ic(f"Failed to send reset email: {email_ex}")
+
+            toast_ok = render_template("___toast_ok.html", message=x.lans("check_your_email"))
+            return f"""<browser mix-bottom=#toast>{ toast_ok }</browser>"""
+
+    except Exception as ex:
+        ic(ex)
+        return "error", 500
+    finally:
+        if "cursor" in locals(): cursor.close()
+        if "db" in locals(): db.close()
+
+
+##############################
+@app.route("/create-new-password", methods=["GET", "POST"])
+@app.route("/create-new-password/<lan>", methods=["GET", "POST"])
+def create_new_password(lan = "english"):
+    try:
+        # language handling so flags/translations work
+        if lan not in x.allowed_languages:
+            lan = "english"
+        x.default_language = lan
+        key = request.args.get("key") or request.form.get("key")
+        if not key:
+            raise Exception(x.lans("invalid_reset_key"), 400)
+
+        db, cursor = x.db()
+        q = "SELECT * FROM users WHERE user_password_reset_key = %s"
+        cursor.execute(q, (key,))
+        row = cursor.fetchone()
+        if not row:
+            raise Exception(x.lans("invalid_reset_link"), 400)
+
+        if request.method == "GET":
+            return render_template("create_new_password.html", key=key, lan=lan)
+
+        if request.method == "POST":
+            user_password = x.validate_user_password(lan)
+            confirm_password = x.validate_user_password_confirm()
+            if user_password != confirm_password:
+                raise Exception(x.lans("passwords_do_not_match"), 400)
+            user_hashed_password = generate_password_hash(user_password)
+            q = """
+            UPDATE users 
+            SET user_password = %s,
+                user_password_reset_key = ''
+            WHERE user_email = %s
+            """
+            cursor.execute(q, (user_hashed_password, row["user_email"]))
+            db.commit()
+            return f"""
+                <browser mix-redirect="/login"></browser>
+            """
+
+    except Exception as ex:
+        ic(ex)
+        # User errors: show toast on the page
+        if ex.args and len(ex.args) > 1 and ex.args[1] == 400:
+            toast_error = render_template("___toast_error.html", message=ex.args[0])
+            return f"""<browser mix-update="#toast">{ toast_error }</browser>""", 400
+        return "Server error", 500
+    finally:
+        if "cursor" in locals(): cursor.close()
+        if "db" in locals(): db.close()
+
+
 ##############################
 ##############################
 def _____USER_____(): pass 
@@ -144,20 +254,23 @@ def signup(lan = "english"):
             user_verification_key = uuid.uuid4().hex
             user_verified_at = 0
             user_deleted_at = 0
+            user_is_admin = 0
+            user_blocked_at = 0
 
             user_hashed_password = generate_password_hash(user_password)
+            verification_link = f"http://127.0.0.1:800/verify-account?key={user_verification_key}"
 
             # Connect to the database
-            q = "INSERT INTO users VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            q = "INSERT INTO users VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
             db, cursor = x.db()
             cursor.execute(q, (user_pk, user_email, user_hashed_password, user_username, 
-            user_first_name, user_last_name, user_avatar_path, user_verification_key, user_verified_at, user_deleted_at))
+            user_first_name, user_last_name, user_avatar_path, user_verification_key, user_verified_at, user_deleted_at, user_is_admin, user_blocked_at))
             db.commit()
 
             # send verification email
-            email_verify_account = render_template("_email_verify_account.html", user_verification_key=user_verification_key)
+            email_verify_account = render_template("_email_verify_account.html", verification_link=verification_link, lans=lan)
             # ic(email_verify_account)
-            x.send_email(user_email, "Verify your account", email_verify_account)
+            x.send_email(user_email, x.lans('verify_your_account'), email_verify_account)
 
             return f"""<mixhtml mix-redirect="{ url_for('login') }"></mixhtml>""", 400
         

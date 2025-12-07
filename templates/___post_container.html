@@ -2,10 +2,10 @@
     <!-- Question: Multipart to add media? -->
     <form mix-post="/api-create-post" enctype="multipart/form-data" class="create-post-form">
         <div class="post-form-top">
-            <img src="{{ url_for('static', filename='images/'~(user.user_avatar_path if user.user_avatar_path else 'unknown.jpg')) }}"
+            <img src="/{{ user.user_avatar_path if user.user_avatar_path else 'static/images/avatars/unknown.jpg' }}"
                 alt="Profile Picture" class="w-8 h-8 rounded-full">
 
-            <textarea name="post" placeholder="{{ x.lans('what_is_happening_now')}}?" class="post-form-textarea"
+            <textarea name="post" placeholder="{{ x.lans('what_do_you_want_to_share')}}" class="post-form-textarea"
                 rows="3"></textarea>
         </div>
 

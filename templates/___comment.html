@@ -1,5 +1,5 @@
 <section id="comment_{{ comment.comment_pk }}" class="d-flex gap-3">
-    <img src="{{ url_for('static', filename='images/' ~ (comment.user_avatar_path if comment.user_avatar_path else 'unknown.jpg')) }}"
+    <img src="/{{ user.user_avatar_path if user.user_avatar_path else 'static/images/avatars/unknown.jpg' }}"
         class="w-8 h-8 rounded-full" alt="Profile Picture">
     <div class="w-full">
         <div class="d-flex j-content-between">

@@ -469,6 +469,11 @@
         "danish": "Opret konto",
         "spanish": "Regístrate"
     },
+    "signup_title": {
+        "english": "Sign up to X",
+        "danish": "Tilmeld dig X",
+        "spanish": "Regístrate en X"
+    },
     "forgot_password_text": {
         "english": "Forgot password",
         "danish": "Glemt adgangskode",
@@ -523,5 +528,10 @@
         "english": "Delete account",
         "danish": "Slet konto",
         "spanish": "Eliminar cuenta"
+    },
+    "what_do_you_want_to_share": {
+        "english": "What's on your mind?",
+        "danish": "Hvad vil du dele?",
+        "spanish": "¿Qué tienes en mente"
     }
 }
