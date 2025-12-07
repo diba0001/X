@@ -1,0 +1,35 @@
+<section id="comment_{{ comment.comment_pk }}" class="d-flex gap-3">
+    <img src="{{ url_for('static', filename='images/' ~ (comment.user_avatar_path if comment.user_avatar_path else 'unknown.jpg')) }}"
+        class="w-8 h-8 rounded-full" alt="Profile Picture">
+    <div class="w-full">
+        <div class="d-flex j-content-between">
+            <div class="d-flex gap-1">
+                <div class="post-header">
+                    <span class="name">
+                        {{ comment.user_first_name }}
+                        {{ comment.user_last_name }}
+                    </span>
+                    <span class="handle">@{{ comment.user_username }}</span> · <span class="time">1d</span>
+                </div>
+            </div>
+
+            <div>
+                {% if comment.user_pk == user.user_pk %}
+                <button
+                    mix-get="{{ url_for('api_edit_comment') }}?comment_pk={{ comment.comment_pk }}&post_pk={{ post_pk }}">
+                    <i class="fa-solid fa-pen pointer-e-none"></i>
+                </button>
+
+                <button
+                    mix-get="{{ url_for('api_delete_comment') }}?comment_pk={{ comment.comment_pk }}&post_pk={{ post_pk }}"
+                    class="text-c-red">
+                    <i class="fa-solid fa-trash pointer-e-none"></i>
+                </button>
+                {% endif %}
+            </div>
+        </div>
+        <div class="w-full ml-2">
+            <p id="comment_text{{ comment.comment_pk }}">{{ comment.comment_text }}</p>
+        </div>
+    </div>
+</section>
