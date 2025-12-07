@@ -16,17 +16,14 @@
             <div>
                 {% if comment.user_pk == user.user_pk %}
                 <button
-                    mix-get="{{ url_for('api_edit_comment') }}?comment_pk={{ comment.comment_pk }}&post_pk={{ post_pk }}"
-                    mix-default="{{ x.lans('edit_comment') }}" mix-await="{{ x.lans('editing_comment') }}"
-                    class="bg-c-black text-c-white px-4 py-2 rounded-xl text-100">
-                    {{ x.lans('edit_comment') }}
+                    mix-get="{{ url_for('api_edit_comment') }}?comment_pk={{ comment.comment_pk }}&post_pk={{ post_pk }}">
+                    <i class="fa-solid fa-pen pointer-e-none"></i>
                 </button>
 
                 <button
                     mix-get="{{ url_for('api_delete_comment') }}?comment_pk={{ comment.comment_pk }}&post_pk={{ post_pk }}"
-                    mix-default="{{ x.lans('delete_comment') }}" mix-await="{{ x.lans('deleting_comment') }}"
-                    class="bg-c-red text-c-white px-4 py-2 rounded-xl text-100">
-                    {{ x.lans('delete_comment') }}
+                    class="text-c-red">
+                    <i class="fa-solid fa-trash pointer-e-none"></i>
                 </button>
                 {% endif %}
             </div>

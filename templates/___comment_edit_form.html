@@ -5,12 +5,12 @@
         rows="2">{{ comment_text }}</textarea>
 
     <button mix-default="{{ x.lans('save') }}" mix-await="{{ x.lans('saving') }}"
-        class="bg-c-black text-c-white px-4 py-2 rounded-xl" style="pointer-events: none;">
+        class="bg-c-black text-c-white px-4 py-2 rounded-xl">
         {{ x.lans('save') }}
     </button>
 
     <button mix-get="{{ url_for('api_cancel_edit_comment') }}?comment_pk={{ comment_pk }}&post_pk={{ post_pk }}"
-        mix-await="{{ x.lans('canceling') }}" class="ml-2 text-c-gray cursor-pointer" style="pointer-events: none;">
+        mix-await="{{ x.lans('canceling') }}" class="ml-2 text-c-gray cursor-pointer">
         {{ x.lans('cancel') }}
     </button>
 

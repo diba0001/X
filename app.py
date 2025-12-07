@@ -966,15 +966,7 @@ def api_create_comment():
         q = "INSERT INTO comments VALUES(%s, %s, %s, %s, %s)"
         cursor.execute(q, (comment_pk, post_pk, user_pk, comment_text, current_epoch))
 
-        # 2. Increment post_total_comments
-        q_increment_post = """
-            UPDATE posts 
-            SET post_total_comments = post_total_comments + 1 
-            WHERE post_pk = %s
-        """
-        cursor.execute(q_increment_post, (post_pk,))
-
-        # 3. Hent ny total comment count
+        # 2. Hent ny total comment count
         q_get_count = "SELECT post_total_comments FROM posts WHERE post_pk = %s"
         cursor.execute(q_get_count, (post_pk,))
         new_count = cursor.fetchone()["post_total_comments"]
@@ -1291,15 +1283,7 @@ def api_delete_comment():
             db.rollback()
             return "not allowed", 403
 
-        # 2. Decrement comment count
-        q_increment_post = """
-        UPDATE posts 
-        SET post_total_comments = post_total_comments - 1 
-        WHERE post_pk = %s
-        """
-        cursor.execute(q_increment_post, (post_pk,))
-
-        # 3. Hent ny total comment count
+        # 2. Hent ny total comment count
         q_get_count = "SELECT post_total_comments FROM posts WHERE post_pk = %s"
         cursor.execute(q_get_count, (post_pk,))
         new_count = cursor.fetchone()["post_total_comments"]
