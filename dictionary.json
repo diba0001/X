@@ -469,6 +469,11 @@
         "danish": "Opret konto",
         "spanish": "Regístrate"
     },
+    "signup_title": {
+        "english": "Sign up to X",
+        "danish": "Tilmeld dig X",
+        "spanish": "Regístrate en X"
+    },
     "forgot_password_text": {
         "english": "Forgot password",
         "danish": "Glemt adgangskode",
