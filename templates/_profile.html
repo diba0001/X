@@ -9,7 +9,7 @@
 <!-- Separate avatar upload form -->
 <form action="{{ url_for('api_upload_avatar') }}" method="post" enctype="multipart/form-data" mix-post class="d-flex a-items-center gap-2 mt-2">
   <input type="file" name="avatar" accept="image/*">
-  <button type="submit" class="px-4 py-1 text-c-white bg-c-black rounded-lg" style="border: 1px solid black; cursor: pointer;">Upload</button>
+  <button type="submit" class="px-4 py-1 text-c-white bg-c-black rounded-lg" style="border: 1px solid black; cursor: pointer;">{{ x.lans('upload') }}</button>
 </form>
 
 <!-- Profile fields form (no avatar here) -->
@@ -40,6 +40,6 @@
 </form>
 <div class="py-8 d-flex flex-col a-items-center">
     <a href="{{ url_for('api_delete_profile') }}" class="text-c-red" hover="cursor-pointer">
-        Delete account
+        {{ x.lans('delete_account') }}
     </a>
 </div>
