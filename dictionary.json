@@ -154,6 +154,11 @@
         "danish": "Mere",
         "spanish": "Más"
     },
+    "at_time": {
+        "english": "at",
+        "danish": "kl.",
+        "spanish": "a las"
+    },
     "who_to_follow": {
         "english": "Who to follow",
         "danish": "Personer du kan følge",
@@ -508,5 +513,21 @@
         "english": "Repeat password",
         "danish": "Gentag adgangskode",
         "spanish": "Repite la contraseña"
+    },
+    "upload": {
+        "english": "Upload",
+        "danish": "Upload",
+        "spanish": "Subir"
+    },
+    "delete_account": {
+        "english": "Delete account",
+        "danish": "Slet konto",
+        "spanish": "Eliminar cuenta"
+    },
+    "what_do_you_want_to_share": {
+        "english": "What's on your mind?",
+        "danish": "Hvad vil du dele?",
+        "spanish": "¿Qué tienes en mente"
+
     }
 }
