@@ -179,6 +179,7 @@ CREATE TABLE `users` (
   `user_pk` char(32) NOT NULL,
   `user_email` varchar(100) NOT NULL,
   `user_password` varchar(255) NOT NULL,
+  `user_password_reset_key` char(32) NOT NULL,
   `user_username` varchar(20) NOT NULL,
   `user_first_name` varchar(20) NOT NULL,
   `user_last_name` varchar(20) NOT NULL DEFAULT '',
