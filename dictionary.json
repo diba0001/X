@@ -448,5 +448,65 @@
         "english": "Deleting...",
         "danish": "Sletter...",
         "spanish": "Eliminando..."
+    },
+    "create_new_password": {
+        "english": "Create new password",
+        "danish": "Opret ny adgangskode",
+        "spanish": "Crear nueva contraseña"
+    },
+    "login_title": {
+        "english": "Log in to X",
+        "danish": "Log ind på X",
+        "spanish": "Inicia sesión en X"
+    },
+    "signup_link_text": {
+        "english": "Sign up",
+        "danish": "Opret konto",
+        "spanish": "Regístrate"
+    },
+    "forgot_password_text": {
+        "english": "Forgot password",
+        "danish": "Glemt adgangskode",
+        "spanish": "¿Olvidaste tu contraseña?"
+    },
+    "reset_password_link_text": {
+        "english": "Reset password",
+        "danish": "Nulstil adgangskode",
+        "spanish": "Restablecer contraseña"
+    },
+    "update_password": {
+        "english": "Update password",
+        "danish": "Opdater adgangskode",
+        "spanish": "Actualizar contraseña"
+    },
+    "send_reset_text": {
+        "english": "Send reset",
+        "danish": "Send nulstilling",
+        "spanish": "Enviar reinicio"
+    },
+    "check_your_email": {
+        "english": "If that email is registered, a reset link has been sent.",
+        "danish": "Hvis den e-mail er registreret, er der sendt et link til nulstilling.",
+        "spanish": "Si ese correo está registrado, se ha enviado un enlace de restablecimiento."
+    },
+    "invalid_reset_key": {
+        "english": "Invalid reset key",
+        "danish": "Ugyldig nulstillingsnøgle",
+        "spanish": "Clave de restablecimiento no válida"
+    },
+    "invalid_reset_link": {
+        "english": "Invalid reset link",
+        "danish": "Ugyldigt nulstillingslink",
+        "spanish": "Enlace de restablecimiento no válido"
+    },
+    "passwords_do_not_match": {
+        "english": "Passwords do not match",
+        "danish": "Adgangskoderne er ikke ens",
+        "spanish": "Las contraseñas no coinciden"
+    },
+    "user_password_confirm": {
+        "english": "Repeat password",
+        "danish": "Gentag adgangskode",
+        "spanish": "Repite la contraseña"
     }
 }
