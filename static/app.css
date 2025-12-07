@@ -1009,7 +1009,8 @@ aside {
   color: rgb(15, 15, 15);
   border: 1px solid rgb(200, 200, 200);
   border-radius: 2rem;
-  font-weight: 600;
+  font-weight: bold;
+  font-size: 14px;
   cursor: pointer;
   transition: background-color 0.2s;
 }
@@ -1018,19 +1019,66 @@ aside {
   background-color: rgb(240, 240, 240);
 }
 
-.btn-save {
+.btn-follow,.btn-save {
   padding: 0.7rem 1.5rem;
   background-color: rgb(15, 15, 15);
   color: white;
   border: none;
   border-radius: 2rem;
   font-weight: bold;
+  font-size: 14px;
   cursor: pointer;
   transition: background-color 0.2s;
 }
 
-.btn-save:hover {
+.btn-follow:hover,.btn-save:hover {
   background-color: rgb(50, 50, 50);
+}
+
+aside form:has(.btn-cancel),
+aside form:has(.btn-follow) {
+  border: none;
+  display: block;
+}
+
+aside form {
+  border: 1px solid rgb(230, 230, 230);
+  transition: border-color 0.2s ease;
+}
+
+aside form:focus-within {
+  border-color: black;
+}
+
+.btn-block {
+  padding: 0.5rem 1.2rem;
+  background-color: black;
+  color: white;
+  border: 2px solid black;
+  border-radius: 2rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-block:hover {
+  background-color: red;
+  color: black;
+}
+
+.btn-unblock {
+  padding: 0.7rem 1.5rem;
+  background-color: white;
+  color: rgb(15, 15, 15);
+  border: 2px solid black;
+  border-radius: 2rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-unblock:hover {
+  background-color: lightgreen;
 }
 
 /* Edit button on tweet */

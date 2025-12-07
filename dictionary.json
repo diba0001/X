@@ -181,7 +181,7 @@
     },
     "what_is_happening_now": {
         "english": "What is happening now",
-        "danish": "Nyheder",
+        "danish": "Hvad vil du dele",
         "spanish": "Qué está pasando ahora"
     },
     "follow": {
@@ -191,7 +191,7 @@
     },
     "unfollow": {
         "english": "Unfollow",
-        "danish": "Fjern følg",
+        "danish": "Fjern følger",
         "spanish": "Dejar de seguir"
     },
     "show_more": {
@@ -377,7 +377,7 @@
     "remove": {
         "english": "Fjern",
         "danish": "Remove",
-        "spanish": "Remova"
+        "spanish": "Quitar"
     },
     "this_cant_be_undone": {
         "english": "This cannot be reverted.",

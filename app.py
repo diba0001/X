@@ -307,12 +307,6 @@ def logout():
 def home_comp():
     try:
 
-        print(f"DEBUG - Post data from DB:")
-        print(f"  post_pk: {post['post_pk']} (type: {type(post['post_pk'])})")
-        print(f"  post_user_fk: {post['post_user_fk']} (type: {type(post['post_user_fk'])})")
-        print(f"DEBUG - Session user data:")
-        print(f"  user_pk: {user['user_pk']} (type: {type(user['user_pk'])})")
-
         user = session.get("user", "")
         if not user: return "error"
         db, cursor = x.db()
