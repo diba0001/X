@@ -1909,48 +1909,50 @@ def api_upload_avatar():
         if "db" in locals(): db.close()
 
 
-# @app.post("/api-search")
-# def api_search():
-#     try:
-#         # TODO: The input search_for must be validated
-#         search_for = request.form.get("search_for", "")
-#         if not search_for:
-#             return """
-#             <browser mix-remove="#search_results"></browser>
-#             """
-#         part_of_query = f"%{search_for}%"
-#         ic(search_for)
-#         db, cursor = x.db()
-#         q = "SELECT * FROM users WHERE user_username LIKE %s"
-#         cursor.execute(q, (part_of_query,))
-#         users = cursor.fetchall()
-#         orange_box = render_template("_orange_box.html", users=users)
-#         return f"""
-#             <browser mix-remove="#search_results"></browser>
-#             <browser mix-bottom="#search_form">{orange_box}</browser>
-#         """
-#     except Exception as ex:
-#         ic(ex)
-#         return str(ex)
-#     finally:
-#         if "cursor" in locals(): cursor.close()
-#         if "db" in locals(): db.close()
-
-
 ##############################
 @app.post("/api-search")
 def api_search():
     try:
-        # TODO: The input search_for must be validated
-        search_for = request.form.get("search_for", "")
-        if not search_for: return """empty search field""", 400
+        # Get search input
+        search_for = request.form.get("search_for", "").strip()
+
+        if not search_for:
+            return """
+            <browser mix-replace="#search_results">
+                <div id="search_results" class="d-none"></div>
+            </browser>
+            """
+        
+        user_pk = g.user["user_pk"]
         part_of_query = f"%{search_for}%"
-        # ic(search_for)
+        
         db, cursor = x.db()
-        q = "SELECT * FROM users WHERE user_username LIKE %s"
-        cursor.execute(q, (part_of_query,))
+        q = """
+            SELECT users.*, 
+            (SELECT COUNT(*) FROM follows WHERE follow_follower_fk = %s AND follow_followed_fk = users.user_pk) AS is_followed_by_user
+            FROM users 
+            WHERE user_username LIKE %s 
+            AND user_pk != %s
+            LIMIT 5
+        """
+        cursor.execute(q, (user_pk, part_of_query, user_pk))
         users = cursor.fetchall()
-        return jsonify(users)
+        
+        if not users:
+            users_html = f'<div class="p-2 text-c-gray">{x.lans("user_not_found")}</div>'
+        else:
+            for u in users:
+                u['is_followed_by_user'] = True if u['is_followed_by_user'] > 0 else False
+            users_html = render_template("_search_results.html", users=users)
+
+        return f"""
+        <browser mix-replace="#search_results">
+            <div id="search_results" class="p-absolute top-9 left-0 w-full bg-c-white h-auto pa-4 border-1 border-c-gray:+50 rounded-sm shadow-md">
+                {users_html}
+            </div>
+        </browser>
+        """
+
     except Exception as ex:
         ic(ex)
         return str(ex)

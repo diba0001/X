@@ -1,11 +1,15 @@
+{% for suggestion in users %}
 <div class="d-flex a-items-center j-content-between">
-    <img src="/{{ suggestion.user_avatar_path if suggestion.user_avatar_path else 'static/images/avatars/unknown.jpg' }}" class="w-8 h-8 rounded-full" alt="Profile Picture">
-   <div class="w-full ml-2">
+    <div class="d-flex a-items-center">
+        <img src="/{{ suggestion.user_avatar_path if suggestion.user_avatar_path else 'static/images/avatars/unknown.jpg' }}" class="w-8 h-8 rounded-full obj-f-cover" alt="Profile Picture">
+        <div class="w-full ml-2">
             <p class="text-w-bold text-c-black">
                 {{ suggestion.user_first_name }} {{ suggestion.user_last_name }}
             </p>
             <p class="text-c-gray:+20 text-90">@{{ suggestion.user_username }}</p>
+        </div>
     </div>
+    
     <div>
         {% if suggestion.is_followed_by_user %}
             {% with user_pk=suggestion.user_pk %}
@@ -18,3 +22,8 @@
         {% endif %}
     </div>
 </div>
+{% else %}
+<div class="p-2 text-c-gray">
+    {{ x.lans("no_users_found") if x.lans("no_users_found") else "No users found" }}
+</div>
+{% endfor %}
