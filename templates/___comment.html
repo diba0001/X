@@ -9,7 +9,26 @@
                         {{ comment.user_first_name }}
                         {{ comment.user_last_name }}
                     </span>
-                    <span class="handle">@{{ comment.user_username }}</span> · <span class="time">1d</span>
+                    <span class="handle">@{{ comment.user_username }}</span> · <span class="time">
+                        {% if comment.comment_created_at %}
+                        {% if lan == "english" %}
+                        {{ datetime.fromtimestamp(comment.comment_created_at).strftime('%d %b %Y') }}
+                        {% else %}
+                        {{ datetime.fromtimestamp(comment.comment_created_at).strftime('%d-%m-%Y') }}
+                        {% endif %}
+
+                        {{ x.lans('at_time') }}
+
+                        {% if lan == "english" %}
+                        {{ datetime.fromtimestamp(comment.comment_created_at).strftime('%I:%M %p') }}
+                        {% else %}
+                        {{ datetime.fromtimestamp(comment.comment_created_at).strftime('%H:%M') }}
+                        {% endif %}
+
+                        {% else %}
+                        Recently
+                        {% endif %}
+                    </span>
                 </div>
             </div>
 

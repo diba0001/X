@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, session, redirect, url_for, j
 from flask_session import Session
 from werkzeug.security import generate_password_hash
 from werkzeug.security import check_password_hash
+from datetime import datetime
 import x 
 import time
 import uuid
@@ -16,6 +17,8 @@ from icecream import ic
 ic.configureOutput(prefix=f'----- | ', includeContext=True)
 
 app = Flask(__name__)
+
+app.jinja_env.globals["datetime"] = datetime
 
 # Set the maximum file size to 10 MB
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max
@@ -188,9 +191,9 @@ def signup(lan = "english"):
 @x.no_cache
 def home():
     try:
-        user = session.get("user", "")
-        if not user: return redirect(url_for("login"))
-        user_pk = user["user_pk"]
+        
+        if not g.user: return redirect(url_for("login"))
+        user_pk = g.user["user_pk"]
         
         db, cursor = x.db()
 
@@ -255,7 +258,7 @@ def home():
 
         lan = session["user"]["user_language"]
 
-        return render_template("home.html", lan=lan, dictionary=dictionary, tweets=tweets, trends=trends, suggestions=suggestions, following=following, user=user)
+        return render_template("home.html", lan=lan, dictionary=dictionary, tweets=tweets, trends=trends, suggestions=suggestions, following=following, user=g.user)
     except Exception as ex:
         ic(ex)
         return "error"
@@ -307,15 +310,16 @@ def logout():
 def home_comp():
     try:
 
-        user = session.get("user", "")
-        if not user: return "error"
+        if not g.user:
+            return "invalid user"
+        
         db, cursor = x.db()
         q = "SELECT * FROM users JOIN posts ON user_pk = post_user_fk WHERE posts.post_blocked_at = 0 ORDER BY RAND() LIMIT 5"
         cursor.execute(q)   
         tweets = cursor.fetchall()
         # ic(tweets)
 
-        html = render_template("_home_comp.html", tweets=tweets, user=user)
+        html = render_template("_home_comp.html", tweets=tweets, user=g.user)
         return f"""<browser mix-update="main">{ html }</browser>"""
     except Exception as ex:
         ic(ex)
@@ -328,14 +332,15 @@ def home_comp():
 @app.get("/profile")
 def profile():
     try:
-        user = session.get("user", "")
-        if not user: return "error"
+        
+        if not g.user: return "invalid user"
+
         q = "SELECT * FROM users WHERE user_pk = %s"
         db, cursor = x.db()
-        cursor.execute(q, (user["user_pk"],))
+        cursor.execute(q, (g.user["user_pk"],))
         user = cursor.fetchone()
         lan = session["user"]["user_language"]
-        profile_html = render_template("_profile.html", x=x, user=user, lan=lan, dictionary=dictionary)
+        profile_html = render_template("_profile.html", x=x, user=g.user, lan=lan, dictionary=dictionary)
         return f"""<browser mix-update="main">{ profile_html }</browser>"""
     except Exception as ex:
         ic(ex)
@@ -348,11 +353,10 @@ def profile():
 @app.get("/admin")
 def admin():
     try:
-        user = session.get("user", "")
-        if not user: return redirect(url_for("login"))
+        if not g.user: return redirect(url_for("login"))
         
         # Only allow admins; others go back to home
-        if not user.get("user_is_admin"):
+        if not g.user.get("user_is_admin"):
             return redirect(url_for("home"))
 
         lan = session["user"]["user_language"]
@@ -368,7 +372,7 @@ def admin():
         cursor.execute(q)
         users = cursor.fetchall()
 
-        html = render_template("_admin.html", user=user, users=users, lan=lan, x=x)
+        html = render_template("_admin.html", user=g.user, users=users, lan=lan, x=x)
         return f"""<browser mix-update="main">{ html }</browser>"""
     except Exception as ex:
         ic(ex)
@@ -382,11 +386,10 @@ def admin():
 @app.get("/admin-users-section")
 def admin_users_section():
     try:
-        user = session.get("user", "")
-        if not user:
+        if not g.user:
             return redirect(url_for("login"))
 
-        if not user.get("user_is_admin"):
+        if not g.user.get("user_is_admin"):
             return redirect(url_for("home"))
 
         db, cursor = x.db()
@@ -400,7 +403,7 @@ def admin_users_section():
         users = cursor.fetchall()
 
         nav_html = render_template("___admin_nav.html")
-        content_html = render_template("_admin_users.html", users=users, user=user, x=x)
+        content_html = render_template("_admin_users.html", users=users, user=g.user, x=x)
 
         return f"""
         <browser mix-update="#admin_nav">{ nav_html }</browser>
@@ -418,17 +421,16 @@ def admin_users_section():
 @app.get("/admin-posts-section")
 def admin_posts_section():
     try:
-        user = session.get("user", "")
-        if not user:
+        if not g.user:
             return redirect(url_for("login"))
 
-        if not user.get("user_is_admin"):
+        if not g.user.get("user_is_admin"):
             return redirect(url_for("home"))
+        
+        lan = session["user"]["user_language"]
 
         db, cursor = x.db()
-
-        # Get blocked posts with user fields and like status like the home feed
-        user_pk = user["user_pk"]
+        
         q = """
             SELECT 
                 p.post_pk,
@@ -436,6 +438,8 @@ def admin_posts_section():
                 p.post_media_path,
                 p.post_total_likes,
                 p.post_blocked_at,
+                p.post_created_at,
+                p.post_total_comments,
                 u.user_first_name,
                 u.user_last_name,
                 u.user_username,
@@ -450,10 +454,10 @@ def admin_posts_section():
             WHERE p.post_blocked_at != 0
             ORDER BY p.post_blocked_at DESC
         """
-        cursor.execute(q, (user_pk,))
+        cursor.execute(q, (g.user["user_pk"],))
         blocked_posts = cursor.fetchall()
 
-        content_html = render_template("_admin_posts.html", blocked_posts=blocked_posts, user=user, x=x)
+        content_html = render_template("_admin_posts.html", blocked_posts=blocked_posts, user=g.user, x=x, lan=lan)
         nav_html = render_template("___admin_nav.html")
 
         return f"""
@@ -472,7 +476,7 @@ def admin_posts_section():
 @app.post("/api-admin-block-user")
 def api_admin_block_user():
     try:
-        admin_user = session.get("user", "")
+        admin_user = g.user
         if not admin_user: return "invalid user", 401
         if not admin_user.get("user_is_admin"): return "forbidden", 403
 
@@ -518,7 +522,7 @@ def api_admin_block_user():
 @app.post("/api-admin-unblock-user")
 def api_admin_unblock_user():
     try:
-        admin_user = session.get("user", "")
+        admin_user = g.user
         if not admin_user: return "invalid user", 401
         if not admin_user.get("user_is_admin"): return "forbidden", 403
 
@@ -564,7 +568,7 @@ def api_admin_unblock_user():
 @app.post("/api-admin-block-post")
 def api_admin_block_post():
     try:
-        admin_user = session.get("user", "")
+        admin_user = g.user
         if not admin_user or not admin_user.get("user_is_admin"):
             return "forbidden", 403
 
@@ -618,7 +622,7 @@ def api_admin_block_post():
 @app.post("/api-admin-unblock-post")
 def api_admin_unblock_post():
     try:
-        admin_user = session.get("user", "")
+        admin_user = g.user
         if not admin_user or not admin_user.get("user_is_admin"):
             return "forbidden", 403
 
@@ -676,13 +680,10 @@ def api_admin_unblock_post():
 @x.no_cache
 def api_like_tweet():
     try:
-        user = session.get("user", "")
-        if not user: return "invalid user", 401
+        if not g.user: return "invalid user", 401
         
         post_pk = request.form.get("post_pk", "") 
         if not post_pk: raise Exception("Missing post ID", 400)
-
-        user_pk = user["user_pk"]
         
         # Get the current Unix epoch timestamp in seconds
         current_epoch = int(time.time()) 
@@ -691,7 +692,7 @@ def api_like_tweet():
 
         # Insert a new like record with the composite key and timestamp
         q_insert_like = "INSERT INTO likes (like_user_fk, like_post_fk, like_timestamp) VALUES(%s, %s, %s)"
-        cursor.execute(q_insert_like, (user_pk, post_pk, current_epoch))
+        cursor.execute(q_insert_like, (g.user["user_pk"], post_pk, current_epoch))
         
         db.commit()
         
@@ -739,20 +740,17 @@ def api_like_tweet():
 @x.no_cache
 def api_unlike_tweet():
     try:
-        user = session.get("user", "")
-        if not user: return "invalid user", 401
+        if not g.user: return "invalid user", 401
         
         # Get post_pk from mix-data form
         post_pk = request.form.get("post_pk", "") 
         if not post_pk: raise Exception("Missing post ID", 400)
 
-        user_pk = user["user_pk"]
-
         db, cursor = x.db()
 
         # Delete the like record
         q_delete_like = "DELETE FROM likes WHERE like_user_fk = %s AND like_post_fk = %s"
-        cursor.execute(q_delete_like, (user_pk, post_pk))
+        cursor.execute(q_delete_like, (g.user["user_pk"], post_pk))
         db.commit()
 
        # Get the new total like count to display
@@ -786,10 +784,10 @@ def api_unlike_tweet():
 @x.no_cache
 def follow_user():
     try:
-        user = session.get("user")
-        if not user: return "unauthorized", 401
+
+        if not g.user: return "unauthorized", 401
         
-        follower_fk = user["user_pk"]
+        follower_fk = g.user["user_pk"]
         followed_fk = request.form.get("user_pk")
         
         if not followed_fk: raise Exception("User ID missing", 400)
@@ -822,10 +820,9 @@ def follow_user():
 @x.no_cache
 def unfollow_user():
     try:
-        user = session.get("user")
-        if not user: return "unauthorized", 401
+        if not g.user: return "unauthorized", 401
         
-        follower_fk = user["user_pk"]
+        follower_fk = g.user["user_pk"]
         followed_fk = request.form.get("user_pk")
         
         if not followed_fk: raise Exception("User ID missing", 400)
@@ -859,6 +856,10 @@ def comments():
             post_pk = request.form.get("post_pk", "")
             if not post_pk:
                 raise Exception("Missing post ID", 400)
+            
+            lan = session["user"]["user_language"]
+
+            ic(lan)
 
             db, cursor = x.db()
 
@@ -890,10 +891,7 @@ def comments():
             
             close_comments_button = render_template("___button_close_comments.html", post_pk=post_pk, comments_count=comments_count)
 
-            # Hvis der ER comments
-            user = session.get("user", "")
-
-            comments_template = render_template("_comments_section.html", comments=comments, post_pk=post_pk, user=user)
+            comments_template = render_template("_comments_section.html", comments=comments, post_pk=post_pk, user=g.user, lan=lan)
 
             return f"""
                 <mixhtml mix-replace="#open_comments_button_container_{post_pk}">
@@ -940,11 +938,8 @@ def comments():
 @app.route("/api-create-comment", methods=["POST"])
 def api_create_comment():
     try:
-        user = session.get("user", "")
-        if not user:
+        if not g.user:
             return "invalid user", 401
-        
-        user_pk = user["user_pk"]
 
         post_pk = request.form.get("post_pk", "")
         if not post_pk:
@@ -954,11 +949,14 @@ def api_create_comment():
         comment_pk = uuid.uuid4().hex
         current_epoch = int(time.time()) 
 
+        # Hent sprog ligesom i /comments
+        lan = session["user"]["user_language"]
+
         db, cursor = x.db()
 
         # 1. Indsæt kommentaren
         q = "INSERT INTO comments VALUES(%s, %s, %s, %s, %s)"
-        cursor.execute(q, (comment_pk, post_pk, user_pk, comment_text, current_epoch))
+        cursor.execute(q, (comment_pk, post_pk, g.user["user_pk"], comment_text, current_epoch))
 
         # 2. Hent ny total comment count
         q_get_count = "SELECT post_total_comments FROM posts WHERE post_pk = %s"
@@ -967,24 +965,39 @@ def api_create_comment():
 
         db.commit()
 
-        # Byg en comment, der ligner JOIN-rowen
+        # Byg en comment, der ligner JOIN-rowen (VIGTIGT: inkl. comment_created_at)
         comment = {
             "comment_pk": comment_pk,
             "comment_post_fk": post_pk,
-            "comment_user_fk": user_pk,
+            "comment_user_fk": g.user["user_pk"],
             "comment_text": comment_text,
-            "user_pk": user["user_pk"],
-            "user_first_name": user["user_first_name"],
-            "user_last_name": user["user_last_name"],
-            "user_username": user["user_username"],
-            "user_avatar_path": user["user_avatar_path"],
+            "comment_created_at": 0, 
+            "user_pk": g.user["user_pk"],
+            "user_first_name": g.user["user_first_name"],
+            "user_last_name": g.user["user_last_name"],
+            "user_username": g.user["user_username"],
+            "user_avatar_path": g.user["user_avatar_path"],
         }
 
-        html_comment_container = render_template("___comment_container.html", post_pk=post_pk)
+        html_comment_container = render_template(
+            "___comment_container.html",
+            post_pk=post_pk,
+            lan=lan
+        )
 
-        html_comment = render_template("___comment.html", comment=comment, post_pk=post_pk, user=user)
+        html_comment = render_template(
+            "___comment.html",
+            comment=comment,
+            post_pk=post_pk,
+            user=g.user,
+            lan=lan
+        )
 
-        html_close_comment = render_template("___button_close_comments.html", comments_count=new_count, post_pk=post_pk)
+        html_close_comment = render_template(
+            "___button_close_comments.html",
+            comments_count=new_count,
+            post_pk=post_pk,
+        )
 
         return f"""
             <browser mix-remove="#no_comment_{post_pk}"></browser>
@@ -1006,13 +1019,17 @@ def api_create_comment():
         ic(ex)
         
         if "x-error comment" in str(ex):
-            toast_error = render_template("___toast_error.html", message=f"{x.lans('comment')} - {x.COMMENT_MIN_LEN} {x.lans('to')} {x.COMMENT_MAX_LEN} {x.lans('characters')}")
+            toast_error = render_template(
+                "___toast_error.html",
+                message=f"{x.lans('comment')} - {x.COMMENT_MIN_LEN} {x.lans('to')} {x.COMMENT_MAX_LEN} {x.lans('characters')}"
+            )
             return f"""<browser mix-bottom="#toast">{toast_error}</browser>"""
 
         return "error", 500
     finally:
         if "cursor" in locals(): cursor.close()
         if "db" in locals(): db.close()
+
 
 
 ##############################
@@ -1026,11 +1043,11 @@ def api_create_post():
         print("Files in request:", request.files)
         print("Form data:", request.form)
 
-        user = session.get("user", "")
-        if not user: return "invalid user"
-        user_pk = user["user_pk"]        
+        if not g.user: return "invalid user"       
+
         post = x.validate_post(request.form.get("post", ""))
         post_pk = uuid.uuid4().hex
+        current_epoch = int(time.time())
         post_media_path = ""
         
         # Handle file upload
@@ -1074,20 +1091,18 @@ def api_create_post():
         
             # --- FIX: Added post_total_likes and post_blocked_at to the query and values ---
         q = """INSERT INTO posts 
-        (post_pk, post_user_fk, post_message, post_total_likes, post_media_path, post_blocked_at, post_created_at, post_deleted_at, post_updated_at) 
-        VALUES(%s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP, %s, 0)"""
-        
-        print(f"DEBUG - user_pk: {user_pk}")
-        print(f"DEBUG - About to insert: post_pk={post_pk}, user_pk={user_pk}, post={post}")
+            (post_pk, post_user_fk, post_message, post_total_likes, post_media_path, post_blocked_at, post_created_at, post_deleted_at, post_updated_at) 
+            VALUES(%s, %s, %s, %s, %s, %s, %s, %s, 0)"""
 
         cursor.execute(q, (
-        post_pk,           # → post_pk
-        user_pk,           # → post_user_fk
-        post,              # → post_message
-        0,                 # → post_total_likes
-        post_media_path,   # → post_media_path
-        0,                 # → post_blocked_at
-        0                  # → post_deleted_at
+        post_pk,
+        g.user["user_pk"],
+        post,
+        0,
+        post_media_path,
+        0,
+        current_epoch, 
+        0
     ))
             # -------------------------------------------------------------------------------
         
@@ -1096,18 +1111,18 @@ def api_create_post():
         toast_ok = render_template("___toast_ok.html", message="The world is reading your post !")
         tweet = {
             "post_pk": post_pk,
-            "post_user_fk": user_pk,
-            "user_first_name": user["user_first_name"],
-            "user_last_name": user["user_last_name"],
-            "user_username": user["user_username"],
-            "user_avatar_path": user["user_avatar_path"],
+            "post_user_fk": g.user["user_pk"] ,
+            "user_first_name": g.user["user_first_name"],
+            "user_last_name": g.user["user_last_name"],
+            "user_username": g.user["user_username"],
+            "user_avatar_path": g.user["user_avatar_path"],
             "post_message": post,
             "post_pk": post_pk,
             "post_media_path": post_media_path,
             "post_created_at": None
         }
         html_post_container = render_template("___post_container.html")
-        html_post = render_template("_tweet.html", tweet=tweet, user=user)
+        html_post = render_template("_tweet.html", tweet=tweet, user=g.user)
         return f"""
             <browser mix-bottom="#toast">{toast_ok}</browser>
             <browser mix-top="#posts">{html_post}</browser>
@@ -1143,9 +1158,9 @@ def api_create_post():
 def api_delete_post(post_pk):
     
     try:
-        user = session.get("user", None)
+    
         # Check if user is logged in
-        if not user:
+        if not g.user:
             return "invalid user", 400 ## TODO: add a HTTP requests på de andre
 
         db, cursor = x.db()
@@ -1153,7 +1168,7 @@ def api_delete_post(post_pk):
 
         # Delete post from database IF its the users post
         q = "DELETE FROM posts WHERE post_pk = %s and post_user_fk = %s"
-        cursor.execute(q, (post_pk, user["user_pk"],))
+        cursor.execute(q, (post_pk, g.user["user_pk"],))
         db.commit()
 
         toast_ok = render_template("___toast_ok.html", message="Your post has been deleted") #TODO: Translate
@@ -1175,84 +1190,13 @@ def api_delete_post(post_pk):
         if "cursor" in locals(): cursor.close()
         if "db" in locals(): db.close()
 
-############## SINGLE POST/TWEET ################
-@app.get("/single-post/<post_pk>")
-def view_single_post(post_pk):
-    # Check if user is logged in
-    try:
-        user = session.get("user", None)
-        if not user:
-            return "invalid user", 400 ## TODO: add a HTTP requests på de andre
-
-        db, cursor = x.db() # Question: hvorfor skal linjen være her?
-
-        # Get likes on a post
-        q = """
-        SELECT 
-            users.*,
-            posts.*,
-            CASE 
-                WHEN likes.like_user_fk IS NOT NULL THEN 1
-                ELSE 0
-            END AS liked_by_user
-        FROM posts
-        JOIN users ON users.user_pk = posts.post_user_fk
-        LEFT JOIN likes 
-            ON likes.like_post_fk = posts.post_pk 
-            AND likes.like_user_fk = %s
-        WHERE posts.post_pk = %s
-        """
-        cursor.execute(q, (user["user_pk"], post_pk,))
-        
-        tweet = cursor.fetchone()
-
-        if not tweet:
-            return "Post not found", 404
-
-
-        # Get comments on a post
-        q = """
-        SELECT
-            comments.*,
-            users.user_first_name,
-            users.user_username,
-            users.user_avatar_path
-        FROM comments
-        JOIN users ON users.user_pk = comments.comment_user_fk
-        WHERE comments.comment_post_fk = %s
-        ORDER BY comments.created_at DESC
-        """
-
-        # ORDER BY comments.created_at DESC (means: Show the newest comments first)
-        
-        cursor.execute(q, (post_pk,))  
-        comments = cursor.fetchall()
-
-        # Manglede at sende post_pk til templaten
-        single_post_html = render_template("_single_post.html", tweet=tweet, comments=comments, post_pk=post_pk)
-        return f"""<browser mix-update="main">{ single_post_html }</browser>"""
-
-    except Exception as ex:
-        
-        # SYSTEM ERROR
-        toast_error = render_template("___toast_error.html", message="Error") # TODO: lav en message der passer til error
-        return f"""<browser mix-bottom="#toast">{toast_error}</browser>""", 500
-    finally:
-        if "cursor" in locals(): cursor.close()
-        if "db" in locals(): db.close()
-
-
-
 ##############################
 @app.route("/api-delete-comment", methods=["GET"])
 def api_delete_comment():
     try:
-        user = session.get("user", "")
-        if not user:
+        if not g.user:
             return "invalid user", 401
         
-        user_pk = user["user_pk"]
-
         comment_pk = request.args.get("comment_pk")
         if not comment_pk:
                     return "missing comment_pk", 400
@@ -1270,7 +1214,7 @@ def api_delete_comment():
           AND comment_post_fk = %s 
           AND comment_user_fk = %s
         """
-        cursor.execute(q, (comment_pk, post_pk, user_pk))
+        cursor.execute(q, (comment_pk, post_pk, g.user["user_pk"]))
         ic("deleted rows:", cursor.rowcount)
 
         if cursor.rowcount == 0:
@@ -1331,8 +1275,7 @@ def api_delete_comment():
 @app.route("/api-edit-comment", methods=["GET"])
 def api_edit_comment():
     try:
-        user = session.get("user", "")
-        if not user:
+        if not g.user:
             return "invalid user", 401
 
         comment_pk = request.args.get("comment_pk")
@@ -1378,8 +1321,7 @@ def api_edit_comment():
 @app.route("/api-update-comment", methods=["POST"])
 def api_update_comment():
     try:
-        user = session.get("user")
-        if not user:
+        if not g.user:
             return "invalid user", 401
 
         comment_pk = request.form.get("comment_pk")
@@ -1397,26 +1339,52 @@ def api_update_comment():
         db, cursor = x.db()
 
         # Opdater kun hvis bruger ejer kommentaren
-        q = """
+        q_update = """
         UPDATE comments 
         SET comment_text = %s 
         WHERE comment_pk = %s AND comment_user_fk = %s
         """
-        cursor.execute(q, (new_text, comment_pk, user["user_pk"]))
+        cursor.execute(q_update, (new_text, comment_pk, g.user["user_pk"]))
         db.commit()
 
-        # Lav et opdateret comment-objekt, så vi kan re-render comment HTML
+        # Hent den opdaterede kommentes timestamp (og evt. post_fk for sikkerhed)
+        q_get = """
+        SELECT comment_created_at, comment_post_fk
+        FROM comments
+        WHERE comment_pk = %s AND comment_user_fk = %s
+        """
+        cursor.execute(q_get, (comment_pk, g.user["user_pk"]))
+        row = cursor.fetchone()
+        if not row:
+            return "comment_not_found", 404
+
+        # Hvis du vil være 100% sikker på post_pk, kan du overskrive den:
+        # post_pk = row["comment_post_fk"]
+
+        # Hent sprog ligesom i /comments
+        lan = session["user"]["user_language"]
+
+        # Lav et opdateret comment-objekt, der matcher det dine templates forventer
         comment = {
             "comment_pk": comment_pk,
+            "comment_post_fk": post_pk,
+            "comment_user_fk": g.user["user_pk"],
             "comment_text": new_text,
-            "user_pk": user["user_pk"],
-            "user_first_name": user["user_first_name"],
-            "user_last_name": user["user_last_name"],
-            "user_username": user["user_username"],
-            "user_avatar_path": user["user_avatar_path"]
+            "comment_created_at": row["comment_created_at"],  # vigtig for tiden
+            "user_pk": g.user["user_pk"],
+            "user_first_name": g.user["user_first_name"],
+            "user_last_name": g.user["user_last_name"],
+            "user_username": g.user["user_username"],
+            "user_avatar_path": g.user["user_avatar_path"]
         }
 
-        html_comment = render_template("___comment.html", comment=comment, post_pk=post_pk, user=user)
+        html_comment = render_template(
+            "___comment.html",
+            comment=comment,
+            post_pk=post_pk,
+            user=g.user,
+            lan=lan
+        )
 
         return f"""
             <browser mix-replace="#comment_{comment_pk}">
@@ -1428,7 +1396,10 @@ def api_update_comment():
         ic(ex)
         
         if "x-error comment" in str(ex):
-            toast_error = render_template("___toast_error.html", message=f"{x.lans('comment')} - {x.COMMENT_MIN_LEN} {x.lans('to')} {x.COMMENT_MAX_LEN} {x.lans('characters')}")
+            toast_error = render_template(
+                "___toast_error.html",
+                message=f"{x.lans('comment')} - {x.COMMENT_MIN_LEN} {x.lans('to')} {x.COMMENT_MAX_LEN} {x.lans('characters')}"
+            )
             return f"""<browser mix-bottom="#toast">{toast_error}</browser>"""
 
         return "error", 500
@@ -1436,6 +1407,7 @@ def api_update_comment():
     finally:
         if "cursor" in locals(): cursor.close()
         if "db" in locals(): db.close()
+
 
 
 ##############################
@@ -1465,7 +1437,7 @@ def api_cancel_edit_comment():
         "___comment.html",
         comment=row,
         post_pk=post_pk,
-        user=session["user"]
+        user=g.user
     )
 
     return f"""
@@ -1484,12 +1456,11 @@ def edit_post(post_pk):
         print(f"DEBUG: Received post_pk: {post_pk}")
         
         # Brug session
-        user = session.get("user", "")
-        if not user:
+        if not g.user:
             toast_error = render_template("___toast_error.html", message="You must be logged in")
             return f"""<browser mix-bottom="#toast">{toast_error}</browser>""", 401
         
-        print(f"DEBUG: User logged in: {user.get('user_pk')}")
+        print(f"DEBUG: User logged in: {g.user.get('user_pk')}")
         
         # Valider post_pk (VIGTIGT for sikkerhed!)
         post_pk = x.validate_uuid4_without_dashes(post_pk)
@@ -1498,7 +1469,7 @@ def edit_post(post_pk):
         # get post from db
         db, cursor = x.db()
         q = "SELECT * FROM posts WHERE post_pk = %s AND post_user_fk = %s AND post_deleted_at = 0"
-        cursor.execute(q, (post_pk, user["user_pk"]))
+        cursor.execute(q, (post_pk, g.user["user_pk"]))
         post = cursor.fetchone()
         
         print(f"DEBUG: Post found: {post is not None}")
@@ -1532,8 +1503,7 @@ def edit_post(post_pk):
 @app.route("/api-update-post/<post_pk>", methods=["POST"])
 def api_update_post(post_pk):
     try:
-        user = session.get("user")
-        if not user: 
+        if not g.user: 
             return "invalid user", 400
         
         post_message = x.validate_post(request.form.get("post_message", ""))
@@ -1543,7 +1513,7 @@ def api_update_post(post_pk):
         
         # Get current post
         cursor.execute("SELECT post_media_path FROM posts WHERE post_pk = %s AND post_user_fk = %s", 
-                      (post_pk, user["user_pk"]))
+                      (post_pk, g.user["user_pk"]))
         current_post = cursor.fetchone()
         if not current_post:
             return "Post not found", 404
@@ -1597,7 +1567,7 @@ def api_update_post(post_pk):
         q = """UPDATE posts 
                SET post_message = %s, post_media_path = %s, post_updated_at = %s 
                WHERE post_pk = %s AND post_user_fk = %s"""
-        cursor.execute(q, (post_message, post_media_path, int(time.time()), post_pk, user["user_pk"]))
+        cursor.execute(q, (post_message, post_media_path, int(time.time()), post_pk, g.user["user_pk"]))
         db.commit()
         
         # Fetch updated post with user data
@@ -1608,7 +1578,7 @@ def api_update_post(post_pk):
         updated_post = cursor.fetchone()
         
         toast_ok = render_template("___toast_ok.html", message="Post updated successfully!")
-        html_post = render_template("_tweet.html", tweet=updated_post, user=user)
+        html_post = render_template("_tweet.html", tweet=updated_post, user=g.user)
         
         return f"""
             <browser mix-bottom="#toast">{toast_ok}</browser>
@@ -1648,9 +1618,8 @@ def api_update_post(post_pk):
 def api_update_profile():
 
     try:
-        user = session.get("user", "")
         lan = session["user"]["user_language"]
-        if not user: return "invalid user"
+        if not g.user: return "invalid user"
 
         # Validate
         user_email = x.validate_user_email(lan)
@@ -1669,7 +1638,7 @@ def api_update_profile():
 
         db, cursor = x.db()
         # Avatar is handled in /api-upload-avatar; pass None to keep current value via COALESCE
-        cursor.execute(q, (user_email, user_username, user_first_name, user["user_pk"]))
+        cursor.execute(q, (user_email, user_username, user_first_name, g.user["user_pk"]))
         db.commit()
 
         # Update session minimally
@@ -1712,13 +1681,11 @@ def api_update_profile():
 @app.route("/api-delete-profile", methods=["GET", "PUT"])
 def api_delete_profile():
     try:
-        user = session.get("user", "")
-        if not user: return "invalid user"
-        user_pk = user.get("user_pk")
+        if not g.user: return "invalid user"
 
         db, cursor = x.db()
         q = "UPDATE users SET user_deleted_at = %s WHere user_pk = %s"
-        cursor.execute(q, (int(time.time()), user_pk))
+        cursor.execute(q, (int(time.time()), g.user.get("user_pk")))
         db.commit()
         
         session.clear()
@@ -1885,7 +1852,7 @@ def get_data_from_sheet():
     try:
  
         # Check if the admin is running this end-point, else show error
-        admin_user = session.get("user", "")
+        admin_user = g.user
         if not admin_user:
             return redirect(url_for("login"))
         if not admin_user.get("user_is_admin"):
