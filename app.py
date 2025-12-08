@@ -195,7 +195,7 @@ def login(lan = "english"):
                  raise Exception(x.lans("user_not_found"), 400)
 
             if user.get("user_blocked_at") != 0:
-                raise Exception(x.lans("user_not_found"), 400)
+                raise Exception(x.lans("user_is_blocked"), 400)
 
             if not check_password_hash(user["user_password"], user_password):
                 raise Exception(x.lans("invalid_credentials"), 400)

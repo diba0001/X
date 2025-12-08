@@ -255,9 +255,9 @@
         "spanish": "Eliminando el post"
     },
     "search_x": {
-        "english": "Search for sports, politics, people...",
-        "danish": "Søg på sport, politik, personer...",
-        "spanish": "Busca por deporte, política, personas…"
+        "english": "Search for people",
+        "danish": "Søg på personer",
+        "spanish": "Busca por personas"
     },
     "verify_your_account": {
         "english": "Verify your account",
@@ -533,5 +533,30 @@
         "english": "What's on your mind?",
         "danish": "Hvad vil du dele?",
         "spanish": "¿Qué tienes en mente"
+    },
+    "user_is_blocked": {
+        "english": "Your account is blocked. Please contact support.",
+        "danish": "Din konto er blokeret. Kontakt venligst support.",
+        "spanish": "Tu cuenta está bloqueada. Por favor, contacta soporte."
+    },
+    "comment_updated": {
+        "english": "Your comment has been updated",
+        "danish": "Din kommentar er blevet opdateret",
+        "spanish": "Tu comentario ha sido actualizado"
+    },
+    "post_live": {
+        "english": "The world is reading your post!",
+        "danish": "Verden læser dit opslag!",
+        "spanish": "¡El mundo está leyendo tu publicación!"
+    },
+    "signing_up": {
+        "english": "Signing up...",
+        "danish": "Opretter...",
+        "spanish": "Registrando..."
+    },
+    "logging_in": {
+        "english": "Logging in...",
+        "danish": "Logger ind...",
+        "spanish": "Iniciando sesión..."
     }
 }
