@@ -195,7 +195,7 @@ def login(lan = "english"):
                  raise Exception(x.lans("user_not_found"), 400)
 
             if user.get("user_blocked_at") != 0:
-                raise Exception(x.lans("user_not_found"), 400)
+                raise Exception(x.lans("user_is_blocked"), 400)
 
             if not check_password_hash(user["user_password"], user_password):
                 raise Exception(x.lans("invalid_credentials"), 400)
@@ -1621,6 +1621,71 @@ def edit_post(post_pk):
 
 ###############################################
 
+@app.get("/cancel-edit-post/<post_pk>")
+def cancel_edit_post(post_pk):
+    try:
+
+        db, cursor = x.db()
+
+        lan = session["user"]["user_language"]
+
+        # SQL — hent ét post med alle user-felter
+        q = """
+            SELECT 
+                p.post_pk,
+                p.post_user_fk,
+                p.post_message,
+                p.post_media_path,
+                p.post_total_likes,
+                p.post_total_comments,
+                p.post_created_at,
+                p.post_updated_at,
+                p.post_blocked_at,
+                p.post_deleted_at,
+
+                u.user_first_name,
+                u.user_last_name,
+                u.user_username,
+                u.user_avatar_path,
+
+                (SELECT COUNT(*) 
+                 FROM likes 
+                 WHERE like_post_fk = p.post_pk 
+                 AND like_user_fk = %s) AS is_liked_by_user
+
+            FROM posts p
+            JOIN users u ON u.user_pk = p.post_user_fk
+            WHERE p.post_pk = %s
+            LIMIT 1
+        """
+
+        cursor.execute(q, (g.user["user_pk"], post_pk))
+        post = cursor.fetchone()
+
+        if not post:
+            return "post_not_found", 404
+
+        # Konverter like-count til Boolean
+        post["is_liked_by_user"] = post["is_liked_by_user"] > 0
+
+        html_post = render_template("_tweet.html", tweet=post, user=g.user, lan=lan)
+
+        return f"""
+        
+        <browser mix-replace="#post_container_{post_pk}">{html_post}</browser>
+        
+        """
+
+    except Exception as ex:
+        ic(ex)
+        return "error", 500
+
+    finally:
+        if "cursor" in locals(): cursor.close()
+        if "db" in locals(): db.close()
+
+###############################################
+
 @app.route("/api-update-post/<post_pk>", methods=["POST"])
 def api_update_post(post_pk):
     try:
@@ -1692,11 +1757,28 @@ def api_update_post(post_pk):
         db.commit()
         
         # Fetch updated post with user data
-        q = """SELECT * FROM posts 
-               JOIN users ON post_user_fk = user_pk 
-               WHERE post_pk = %s"""
-        cursor.execute(q, (post_pk,))
+        q = """
+            SELECT 
+                p.*,
+                u.user_first_name,
+                u.user_last_name,
+                u.user_username,
+                u.user_avatar_path,
+                (
+                    SELECT COUNT(*)
+                    FROM likes
+                    WHERE like_post_fk = p.post_pk
+                    AND like_user_fk = %s
+                ) AS is_liked_by_user
+            FROM posts p
+            JOIN users u ON p.post_user_fk = u.user_pk
+            WHERE p.post_pk = %s
+        """
+        cursor.execute(q, (g.user["user_pk"], post_pk))
         updated_post = cursor.fetchone()
+
+        # Convert like count to boolean
+        updated_post["is_liked_by_user"] = updated_post["is_liked_by_user"] > 0
         
         toast_ok = render_template("___toast_ok.html", message=x.lans('post_updated'))
         html_post = render_template("_tweet.html", tweet=updated_post, user=g.user)
@@ -1882,16 +1964,18 @@ def api_upload_avatar():
 
         # Update g.user in memory
         g.user["user_avatar_path"] = filepath
+        session_user = g.user
+        session_user["user_avatar_path"] = filepath
+        session["user"] = session_user
 
         # Send success response and redirect
-        toast_ok = render_template("___toast_ok.html", message=x.lans('avatar_updated'))
-
-        avatar_url = f"/static/images/avatars/{filename}"
+        toast_ok = render_template("___toast_ok.html", message="Avatar updated successfully!")
+        nav_html = render_template("___nav_profile_tag.html")
+        avatar_url = f"/{filepath}?t={uuid.uuid4().hex}"
         return f"""
             <browser mix-bottom="#toast">{toast_ok}</browser>
             <browser mix-replace="#current_avatar"><img id=\"current_avatar\" src=\"{avatar_url}\" class=\"w-25 h-25 rounded-full obj-f-cover\" alt=\"Current avatar\"></browser>
-            <browser mix-replace="#profile_avatar"><img id=\"profile_avatar\" src=\"{avatar_url}\" class=\"w-25 h-25 rounded-full obj-f-cover\" alt=\"Profile Picture\"></browser>
-            <browser mix-replace="#nav_avatar"><img src=\"/{filepath}\" alt=\"Profile\" id=\"nav_avatar\"></browser>
+            <browser mix-replace="#profile_tag">{nav_html}</browser>
         """, 200
     except Exception as ex:
         ic(f"Exception: {ex}")

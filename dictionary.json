@@ -558,6 +558,7 @@
         "english": "Logging in...",
         "danish": "Logger ind...",
         "spanish": "Iniciando sesión..."
+
     },
     "image_too_large": {
         "english": "Image too large. Maximum 5MB.",
