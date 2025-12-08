@@ -261,9 +261,9 @@ def signup(lan = "english"):
             verification_link = f"http://127.0.0.1:800/verify-account?key={user_verification_key}"
 
             # Connect to the database
-            q = "INSERT INTO users VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            q = "INSERT INTO users VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
             db, cursor = x.db()
-            cursor.execute(q, (user_pk, user_email, user_hashed_password, user_username, 
+            cursor.execute(q, (user_pk, user_email, user_hashed_password, "", user_username, 
             user_first_name, user_last_name, user_avatar_path, user_verification_key, user_verified_at, user_deleted_at, user_is_admin, user_blocked_at))
             db.commit()
 
