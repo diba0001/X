@@ -218,7 +218,7 @@ def login(lan = "english"):
                 return f"""<browser mix-update="#toast">{ toast_error }</browser>""", 400
 
             # System or developer error
-            toast_error = render_template("___toast_error.html", message=f"{x.lans('system_under_maintenance')}")
+            toast_error = render_template("___toast_error.html", message=x.lans('system_under_maintenance'))
             return f"""<browser mix-bottom="#toast">{ toast_error }</browser>""", 500
 
         finally:
@@ -283,14 +283,14 @@ def signup(lan = "english"):
             
             # Database errors
             if "Duplicate entry" and user_email in str(ex): 
-                toast_error = render_template("___toast_error.html", message=f"{x.lans('email_already_registered')}")
+                toast_error = render_template("___toast_error.html", message=x.lans('email_already_registered'))
                 return f"""<mixhtml mix-update="#toast">{ toast_error }</mixhtml>""", 400
             if "Duplicate entry" and user_username in str(ex): 
-                toast_error = render_template("___toast_error.html", message=f"{x.lans('username_already_registered')}")
+                toast_error = render_template("___toast_error.html", message=x.lans('username_already_registered'))
                 return f"""<mixhtml mix-update="#toast">{ toast_error }</mixhtml>""", 400
             
             # System or developer error
-            toast_error = render_template("___toast_error.html", message=f"{x.lans('system_under_maintenance')}")
+            toast_error = render_template("___toast_error.html", message=x.lans('system_under_maintenance'))
             return f"""<mixhtml mix-bottom="#toast">{ toast_error }</mixhtml>""", 500
 
         finally:
@@ -719,7 +719,7 @@ def api_admin_block_post():
             ic(f"Failed to send post blocked email: {email_ex}")
         
         btn_html = render_template("___button_unblock_post.html", post_pk=post_pk)
-        toast_ok = render_template("___toast_ok.html", message="Post blocked")
+        toast_ok = render_template("___toast_ok.html", message=x.lans('toast_post_blocked'))
         return f"""
             <browser mix-bottom="#toast">{toast_ok}</browser>
             <mixhtml mix-replace="#block-btn-{post_pk}">{btn_html}</mixhtml>
@@ -1221,7 +1221,7 @@ def api_create_post():
         
         db.commit()
         
-        toast_ok = render_template("___toast_ok.html", message="The world is reading your post !")
+        toast_ok = render_template("___toast_ok.html", message=x.lans('post_live'))
         tweet = {
             "post_pk": post_pk,
             "post_user_fk": g.user["user_pk"] ,
@@ -1243,23 +1243,28 @@ def api_create_post():
         """
     except Exception as ex:
         ic(ex)
-        if "db" in locals(): db.rollback()
+        
+        if db:
+            try:
+                db.rollback()
+            except Exception:
+                pass
 
-        # User errors
+        # Post validation error
         if "x-error post" in str(ex):
-            toast_error = render_template("___toast_error.html", message=f"Post - {x.POST_MIN_LEN} to {x.POST_MAX_LEN} characters")
+            toast_error = render_template("___toast_error.html", message=f"{x.lans('post')} - {x.POST_MIN_LEN} {x.lans('to')} {x.POST_MAX_LEN} {x.lans('characters')}")
             return f"""<browser mix-bottom="#toast">{toast_error}</browser>"""
         
         # File upload errors
         if "x-error file" in str(ex):
             if "size too large" in str(ex):
-                toast_error = render_template("___toast_error.html", message="Image too large. Maximum 5MB.")
+                toast_error = render_template("___toast_error.html", message=x.lans('image_too_large'))
             else:
-                toast_error = render_template("___toast_error.html", message="Invalid file type. Only images allowed.")
+                toast_error = render_template("___toast_error.html", message=x.lans('system_under_maintenance'))
             return f"""<browser mix-bottom="#toast">{toast_error}</browser>"""
 
         # System or developer error
-        toast_error = render_template("___toast_error.html", message="System under maintenance")
+        toast_error = render_template("___toast_error.html", message=x.lans('system_under_maintenance'))
         return f"""<browser mix-bottom="#toast">{ toast_error }</browser>""", 500
 
     finally:
@@ -1284,7 +1289,7 @@ def api_delete_post(post_pk):
         cursor.execute(q, (post_pk, g.user["user_pk"],))
         db.commit()
 
-        toast_ok = render_template("___toast_ok.html", message="Your post has been deleted") #TODO: Translate
+        toast_ok = render_template("___toast_ok.html", message=x.lans('post_deleted'))
         
         # Remove the post from the DOM + show toast
         # return "ok"
@@ -1296,7 +1301,7 @@ def api_delete_post(post_pk):
     except Exception as ex:
         ic(ex)
         if "db" in locals(): db.rollback()
-        toast_error = render_template("___toast_error.html", message="System under maintenance")
+        toast_error = render_template("___toast_error.html", message=x.lans('system_under_maintenance'))
         return f"""<browser mix-bottom="#toast">{toast_error}</browser>""", 500
 
     finally: 
@@ -1499,7 +1504,10 @@ def api_update_comment():
             lan=lan
         )
 
+        toast_ok = render_template("___toast_ok.html", message=x.lans('comment_updated'))
+
         return f"""
+            <browser mix-bottom="#toast">{toast_ok}</browser>
             <browser mix-replace="#comment_{comment_pk}">
                 {html_comment}
             </browser>
@@ -1570,7 +1578,7 @@ def edit_post(post_pk):
         
         # Brug session
         if not g.user:
-            toast_error = render_template("___toast_error.html", message="You must be logged in")
+            toast_error = render_template("___toast_error.html", message=x.lans("must_be_logged_in"))
             return f"""<browser mix-bottom="#toast">{toast_error}</browser>""", 401
         
         print(f"DEBUG: User logged in: {g.user.get('user_pk')}")
@@ -1590,7 +1598,7 @@ def edit_post(post_pk):
             print(f"DEBUG: Post data: {post}")
  
         if not post:
-            toast_error = render_template("___toast_error.html", message="Post not found or you don't have permission")
+            toast_error = render_template("___toast_error.html", message=x.lans("post_not_found"))
             return f"""<browser mix-bottom="#toast">{toast_error}</browser>""", 403
         
         print("DEBUG: About to render template")
@@ -1604,7 +1612,7 @@ def edit_post(post_pk):
         import traceback
         print(f"ERROR: Full traceback:\n{traceback.format_exc()}")
         ic(ex)
-        toast_error = render_template("___toast_error.html", message="Could not load post")
+        toast_error = render_template("___toast_error.html", message=x.lans("could_not_load_post"))
         return f"""<browser mix-bottom="#toast">{toast_error}</browser>""", 500
  
     finally:
@@ -1690,7 +1698,7 @@ def api_update_post(post_pk):
         cursor.execute(q, (post_pk,))
         updated_post = cursor.fetchone()
         
-        toast_ok = render_template("___toast_ok.html", message="Post updated successfully!")
+        toast_ok = render_template("___toast_ok.html", message=x.lans('post_updated'))
         html_post = render_template("_tweet.html", tweet=updated_post, user=g.user)
         
         return f"""
@@ -1706,18 +1714,18 @@ def api_update_post(post_pk):
         # File upload errors
         if "x-error file" in str(ex):
             if "size too large" in str(ex):
-                toast_error = render_template("___toast_error.html", message="Image too large. Maximum 5MB.")
+                toast_error = render_template("___toast_error.html", message=x.lans('image_too_large'))
             else:
-                toast_error = render_template("___toast_error.html", message="Invalid file type. Only images allowed.")
+                toast_error = render_template("___toast_error.html", message=x.lans('invalid_file_type'))
             return f"""<browser mix-bottom="#toast">{toast_error}</browser>"""
         
         # Post validation error
         if "x-error post" in str(ex):
-            toast_error = render_template("___toast_error.html", message=f"Post - {x.POST_MIN_LEN} to {x.POST_MAX_LEN} characters")
+            toast_error = render_template("___toast_error.html", message=f"{x.lans('post')} - {x.POST_MIN_LEN} {x.lans('to')} {x.POST_MAX_LEN} {x.lans('characters')}")
             return f"""<browser mix-bottom="#toast">{toast_error}</browser>"""
         
         # System error
-        toast_error = render_template("___toast_error.html", message="System under maintenance")
+        toast_error = render_template("___toast_error.html", message=x.lans('system_under_maintenance'))
         return f"""<browser mix-bottom="#toast">{toast_error}</browser>""", 500
         
     finally:
@@ -1761,7 +1769,7 @@ def api_update_profile():
 
         # Response to the browser
       
-        toast_ok = render_template("___toast_ok.html", message=f"{x.lans('profile_updated_successfully')}")
+        toast_ok = render_template("___toast_ok.html", message=x.lans('profile_updated_successfully'))
         return f"""
             <browser mix-bottom="#toast">{toast_ok}</browser>
             <browser mix-update="#profile_tag .name">{user_first_name}</browser>
@@ -1776,14 +1784,14 @@ def api_update_profile():
         
         # Database errors
         if "Duplicate entry" and user_email in str(ex): 
-            toast_error = render_template("___toast_error.html", message=f"{x.lans('email_already_registered')}")
+            toast_error = render_template("___toast_error.html", message=x.lans('email_already_registered'))
             return f"""<mixhtml mix-update="#toast">{ toast_error }</mixhtml>""", 400
         if "Duplicate entry" and user_username in str(ex): 
-            toast_error = render_template("___toast_error.html", message=f"{x.lans('username_already_registered')}")
+            toast_error = render_template("___toast_error.html", message=x.lans('username_already_registered'))
             return f"""<mixhtml mix-update="#toast">{ toast_error }</mixhtml>""", 400
         
         # System or developer error
-        toast_error = render_template("___toast_error.html", message=f"{x.lans('system_under_maintenance')}")
+        toast_error = render_template("___toast_error.html", message=x.lans('system_under_maintenance'))
         return f"""<mixhtml mix-bottom="#toast">{ toast_error }</mixhtml>""", 500
 
     finally:
@@ -1876,7 +1884,7 @@ def api_upload_avatar():
         g.user["user_avatar_path"] = filepath
 
         # Send success response and redirect
-        toast_ok = render_template("___toast_ok.html", message="Avatar updated successfully!")
+        toast_ok = render_template("___toast_ok.html", message=x.lans('avatar_updated'))
 
         avatar_url = f"/static/images/avatars/{filename}"
         return f"""
@@ -1902,7 +1910,7 @@ def api_upload_avatar():
             return f"""<browser mix-bottom=\"#toast\">{toast_error}</browser>""", 400
 
         # System error
-        toast_error = render_template("___toast_error.html", message=f"Could not upload avatar: {str(ex)}")
+        toast_error = render_template("___toast_error.html", message=f"{x.lans('could_not_upload_avatar')} {str(ex)}")
         return f"""<browser mix-bottom=\"#toast\">{toast_error}</browser>""", 500
     finally:
         if "cursor" in locals(): cursor.close()
