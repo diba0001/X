@@ -1956,16 +1956,18 @@ def api_upload_avatar():
 
         # Update g.user in memory
         g.user["user_avatar_path"] = filepath
+        session_user = g.user
+        session_user["user_avatar_path"] = filepath
+        session["user"] = session_user
 
         # Send success response and redirect
         toast_ok = render_template("___toast_ok.html", message="Avatar updated successfully!")
-
-        avatar_url = f"/static/images/avatars/{filename}"
+        nav_html = render_template("___nav_profile_tag.html")
+        avatar_url = f"/{filepath}?t={uuid.uuid4().hex}"
         return f"""
             <browser mix-bottom="#toast">{toast_ok}</browser>
             <browser mix-replace="#current_avatar"><img id=\"current_avatar\" src=\"{avatar_url}\" class=\"w-25 h-25 rounded-full obj-f-cover\" alt=\"Current avatar\"></browser>
-            <browser mix-replace="#profile_avatar"><img id=\"profile_avatar\" src=\"{avatar_url}\" class=\"w-25 h-25 rounded-full obj-f-cover\" alt=\"Profile Picture\"></browser>
-            <browser mix-replace="#nav_avatar"><img src=\"/{filepath}\" alt=\"Profile\" id=\"nav_avatar\"></browser>
+            <browser mix-replace="#profile_tag">{nav_html}</browser>
         """, 200
     except Exception as ex:
         ic(f"Exception: {ex}")
