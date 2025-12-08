@@ -628,5 +628,15 @@
         "english": "No posts yet",
         "danish": "Du har ingen opslag",
         "spanish": "Sin publicaciones"
+    },
+    "click_to_change_avatar_image": {
+        "english": "Change your avatar",
+        "danish": "Ændr avatar",
+        "spanish": "Cambiar avatar"
+    },
+    "no_bookmarks_yet": {
+        "english": "No bookmarked posts yet.",
+        "danish": "Ingen bogmærkede opslag endnu.",
+        "spanish": "Aún no hay publicaciones marcadas"
     }
 }
