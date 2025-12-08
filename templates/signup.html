@@ -73,8 +73,8 @@
               <input name="user_password_confirm" id="password_confirm" type="password" mix-check="{{ x.REGEX_USER_PASSWORD }}">
             </div>
             <button class="x-dialog__btn" 
-            mix-default="Sign up" 
-            mix-await="Signing up...">
+            mix-default="{{ x.lans('signup_link_text') }}" 
+            mix-await="{{ x.lans('signing_up') }}">
                 {{ x.lans('signup') }}
             </button>
         </form>

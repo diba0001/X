@@ -43,7 +43,7 @@
       <form action="/login/{{ lan }}" mix-post class="x-dialog__form" autocomplete="off">
         <input name="user_email" type="text" placeholder="{{ x.lans('email') }}">
         <input name="user_password" type="password" placeholder="{{ x.lans('password') }}">
-        <button class="x-dialog__btn" mix-default="Login" mix-await="Logging in ...">
+        <button class="x-dialog__btn" mix-default="{{ x.lans('login_link_text') }}" mix-await="{{ x.lans('logging_in') }}">
           {{ x.lans("login") }}
         </button>
       </form>
