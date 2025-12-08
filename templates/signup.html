@@ -66,6 +66,12 @@
               </label>              
               <input name="user_password" id="password" type="password" mix-check="{{ x.REGEX_USER_PASSWORD }}">
             </div>
+            <div>
+              <label for="password_confirm">
+                <span>{{ x.lans('user_password_confirm') }}</span>
+              </label>
+              <input name="user_password_confirm" id="password_confirm" type="password" mix-check="{{ x.REGEX_USER_PASSWORD }}">
+            </div>
             <button class="x-dialog__btn" 
             mix-default="Sign up" 
             mix-await="Signing up...">

@@ -255,9 +255,9 @@
         "spanish": "Eliminando el post"
     },
     "search_x": {
-        "english": "Search for sports, politics, people...",
-        "danish": "Søg på sport, politik, personer...",
-        "spanish": "Busca por deporte, política, personas…"
+        "english": "Search for people",
+        "danish": "Søg på personer",
+        "spanish": "Busca por personas"
     },
     "verify_your_account": {
         "english": "Verify your account",
@@ -533,5 +533,10 @@
         "english": "What's on your mind?",
         "danish": "Hvad vil du dele?",
         "spanish": "¿Qué tienes en mente"
+    },
+    "user_is_blocked": {
+        "english": "Your account is blocked. Please contact support.",
+        "danish": "Din konto er blokeret. Kontakt venligst support.",
+        "spanish": "Tu cuenta está bloqueada. Por favor, contacta soporte."
     }
 }
