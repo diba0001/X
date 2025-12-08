@@ -1,8 +1,8 @@
 <div class="post_container" id="post_container_{{ post.post_pk }}">
     <div class="edit-post-page">
         <div class="profile-header">
-            <button type="button" class="back-button">
-                <i class="fa-solid fa-arrow-left" mix-get="/home-comp"></i>
+            <button type="button" class="back-button" mix-get="/cancel-edit-post/{{ post.post_pk }}">
+                <i class="fa-solid fa-arrow-left"></i>
             </button>
             <div class="header-info">
                 <h2>{{ x.lans("edit_post")}}</h2>
@@ -58,7 +58,7 @@
                 <div id="new_media_preview_{{ post.post_pk }}"></div>
 
                 <div class="edit-form-actions">
-                    <button type="button" mix-get="/home-comp" class="btn-cancel">
+                    <button type="button" mix-get="/cancel-edit-post/{{ post.post_pk }}" class="btn-cancel">
                         {{ x.lans("cancel")}}
                     </button>
                     <button type="submit" class="btn-save">
