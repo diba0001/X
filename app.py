@@ -250,7 +250,7 @@ def signup(lan = "english"):
 
             user_pk = uuid.uuid4().hex
             user_last_name = ""
-            user_avatar_path = "https://avatar.iran.liara.run/public/40"
+            user_avatar_path = "static/images/avatars/unknown.jpg"
             user_verification_key = uuid.uuid4().hex
             user_verified_at = 0
             user_deleted_at = 0
@@ -315,18 +315,20 @@ def home():
             SELECT 
                 p.post_pk, p.post_user_fk, p.post_message, p.post_media_path, p.post_total_likes, p.post_created_at, p.post_total_comments,
                 u.user_first_name, u.user_last_name, u.user_username, u.user_avatar_path,
-                (SELECT COUNT(*) FROM likes WHERE like_post_fk = p.post_pk AND like_user_fk = %s) AS is_liked_by_user
+                (SELECT COUNT(*) FROM likes WHERE like_post_fk = p.post_pk AND like_user_fk = %s) AS is_liked_by_user,
+                (SELECT COUNT(*) FROM bookmarks WHERE bookmark_post_fk = p.post_pk AND bookmark_user_fk = %s) AS is_bookmarked_by_user
             FROM posts p
             JOIN users u ON u.user_pk = p.post_user_fk 
             WHERE p.post_blocked_at = 0
             ORDER BY RAND() LIMIT 5
         """
-        cursor.execute(q, (user_pk,))
+        cursor.execute(q, (user_pk, user_pk))
         tweets = cursor.fetchall()
         
         # Convert the count to a boolean for template logic
         for tweet in tweets:
             tweet['is_liked_by_user'] = True if tweet['is_liked_by_user'] > 0 else False
+            tweet['is_bookmarked_by_user'] = True if tweet.get('is_bookmarked_by_user', 0) > 0 else False
             
         # ic(tweets)
 
@@ -439,6 +441,47 @@ def home_comp():
         return "error"
     finally:
         pass
+
+
+##############################
+@app.get("/bookmarks-comp")
+def bookmarks_comp():
+    try:
+        if not g.user:
+            return "invalid user"
+
+        user_pk = g.user["user_pk"]
+        db, cursor = x.db()
+        q = """
+            SELECT 
+                p.post_pk, p.post_user_fk, p.post_message, p.post_media_path, p.post_total_likes, p.post_created_at, p.post_total_comments,
+                u.user_first_name, u.user_last_name, u.user_username, u.user_avatar_path,
+                (SELECT COUNT(*) FROM likes WHERE like_post_fk = p.post_pk AND like_user_fk = %s) AS is_liked_by_user,
+                1 AS is_bookmarked_by_user
+            FROM bookmarks b
+            JOIN posts p ON p.post_pk = b.bookmark_post_fk
+            JOIN users u ON u.user_pk = p.post_user_fk
+            WHERE b.bookmark_user_fk = %s AND p.post_blocked_at = 0
+            ORDER BY b.bookmarked_at DESC
+        """
+        cursor.execute(q, (user_pk, user_pk))
+        tweets = cursor.fetchall()
+
+        for tweet in tweets:
+            tweet['is_liked_by_user'] = True if tweet.get('is_liked_by_user', 0) > 0 else False
+            tweet['is_bookmarked_by_user'] = True
+
+        html = render_template("bookmarks.html", tweets=tweets, user=g.user)
+        return f"""<browser mix-update="main">{ html }</browser>"""
+    except Exception as ex:
+        ic(ex)
+        return "error"
+    finally:
+        if "cursor" in locals(): cursor.close()
+        if "db" in locals(): db.close()
+
+
+ 
 
 
 ##############################
@@ -888,6 +931,69 @@ def api_unlike_tweet():
             return ex.args[0], 400
 
         return "System error during unlike", 500
+    finally:
+        if "cursor" in locals(): cursor.close()
+        if "db" in locals(): db.close()
+
+##############################
+@app.patch("/bookmark-tweet")
+@x.no_cache
+def api_bookmark_tweet():
+    try:
+        if not g.user: return "invalid user", 401
+
+        post_pk = request.form.get("post_pk", "").strip()
+        if not post_pk: raise Exception("Missing post ID", 400)
+
+        current_epoch = int(time.time())
+        db, cursor = x.db()
+        # Prevent crash on duplicates
+        q = "INSERT IGNORE INTO bookmarks (bookmark_user_fk, bookmark_post_fk, bookmarked_at) VALUES (%s, %s, %s)"
+        cursor.execute(q, (g.user["user_pk"], post_pk, current_epoch))
+        db.commit()
+
+        btn_html = render_template("___button_unbookmark_tweet.html", post_pk=post_pk)
+        return f"""
+            <mixhtml mix-replace="#bookmark_button_{post_pk}">{btn_html}</mixhtml>
+        """, 200
+    except Exception as ex:
+        ic(ex)
+        if "db" in locals(): db.rollback()
+        # Silently succeed if already bookmarked
+        if "Duplicate entry" in str(ex):
+            return "", 200
+        if ex.args and len(ex.args) > 1 and ex.args[1] == 400:
+            return ex.args[0], 400
+        return "System error during bookmark", 500
+    finally:
+        if "cursor" in locals(): cursor.close()
+        if "db" in locals(): db.close()
+
+##############################
+@app.patch("/unbookmark-tweet")
+@x.no_cache
+def api_unbookmark_tweet():
+    try:
+        if not g.user: return "invalid user", 401
+
+        post_pk = request.form.get("post_pk", "").strip()
+        if not post_pk: raise Exception("Missing post ID", 400)
+
+        db, cursor = x.db()
+        q = "DELETE FROM bookmarks WHERE bookmark_user_fk = %s AND bookmark_post_fk = %s"
+        cursor.execute(q, (g.user["user_pk"], post_pk))
+        db.commit()
+
+        btn_html = render_template("___button_bookmark_tweet.html", post_pk=post_pk)
+        return f"""
+            <mixhtml mix-replace="#bookmark_button_{post_pk}">{btn_html}</mixhtml>
+        """, 200
+    except Exception as ex:
+        ic(ex)
+        if "db" in locals(): db.rollback()
+        if ex.args and len(ex.args) > 1 and ex.args[1] == 400:
+            return ex.args[0], 400
+        return "System error during unbookmark", 500
     finally:
         if "cursor" in locals(): cursor.close()
         if "db" in locals(): db.close()

@@ -1,0 +1,12 @@
+<div id="bookmarks_view">
+    <h2 class="text-140 text-w-bold mb-2">{{ x.lans('bookmarks') }}</h2>
+    <div id="posts">
+        {% if tweets and tweets|length > 0 %}
+        {% for tweet in tweets: %}
+        {% include "_tweet.html" %}
+        {% endfor %}
+        {% else %}
+        <p>{{ x.lans('no_bookmarks_yet') }}</p>
+        {% endif %}
+    </div>
+</div>
