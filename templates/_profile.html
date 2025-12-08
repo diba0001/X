@@ -1,45 +1,83 @@
-<h1>
-    {{ x.lans("profile") }}
-</h1>
+<div class="profile-container">
+    <div class="profile-header">
+        {% include "___back_button.html" %}
 
-<!-- Current avatar -->
-<img id="current_avatar" src="/{{ user.user_avatar_path if user.user_avatar_path else 'static/images/avatars/unknown.jpg' }}"
-     class="w-25 h-25 rounded-full obj-f-cover" alt="Current avatar">
-
-<!-- Separate avatar upload form -->
-<form action="{{ url_for('api_upload_avatar') }}" method="post" enctype="multipart/form-data" mix-post class="d-flex a-items-center gap-2 mt-2">
-  <input type="file" name="avatar" accept="image/*">
-  <button type="submit" class="px-4 py-1 text-c-white bg-c-black rounded-lg" style="border: 1px solid black; cursor: pointer;">{{ x.lans('upload') }}</button>
-</form>
-
-<!-- Profile fields form (no avatar here) -->
-<form class="x-dialog__form" action="{{ url_for('api_update_profile') }}" mix-post autocomplete="off">
-    <div>
-        <label for="user_email">
-        <span>{{ x.lans("email") }}</span>
-        </label>
-        <input name="user_email" id="user_email" type="text" mix-check="{{ x.REGEX_EMAIL }}" value="{{ user.user_email }}">
+        <div class="header-info">
+            <h2>{{ user.user_name }}</h2>
+        </div>
     </div>
-    <div>
-        <label for="user_username">
-        <span>{{ x.lans('username') }}</span> - {{ x.USER_USERNAME_MIN }}  {{ x.lans('to') }} {{ x.USER_USERNAME_MAX }}  {{ x.lans('characters') }}
-        </label>
-        <input name="user_username" id="user_username" type="text" mix-check="{{ x.REGEX_USER_USERNAME }}" value="{{ user.user_username }}">
+    <div class="profile-banner"></div>
+    <div class="profile-avatar-wrapper">
+        <!-- avatar -->
+        <img id="current_avatar"
+            src="/{{ user.user_avatar_path if user.user_avatar_path else 'static/images/avatars/unknown.jpg' }}"
+            class="w-25 h-25 rounded-full obj-f-cover" alt="Current avatar">
     </div>
-    <div>
-        <label for="user_first_name">
-        <span>{{ x.lans('first_name') }}</span> - {{ x.USER_FIRST_NAME_MIN }}  {{ x.lans('to') }} {{ x.USER_FIRST_NAME_MAX }}  {{ x.lans('characters') }}
-        </label>
-        <input name="user_first_name" id="user_first_name" type="text" mix-check="{{ x.REGEX_USER_USERNAME }}" value="{{ user.user_first_name }}">
-    </div>            
-    <button class="x-dialog__btn" 
-    mix-default="{{ x.lans('update_profile') }}" 
-    mix-await="{{ x.lans('updating_profile') }}">
-        {{ x.lans('update_profile') }}
-    </button>
-</form>
-<div class="py-8 d-flex flex-col a-items-center">
-    <a href="{{ url_for('api_delete_profile') }}" class="text-c-red" hover="cursor-pointer">
-        {{ x.lans('delete_account') }}
-    </a>
+    <div class="profile-names">
+        <div class="profile-name">{{ user.user_name }}</div>
+        <div class="profile-username text-c-blue bold">@{{ user.user_username }}</div>
+    </div>
+    <!-- new avatar form (hidden) -->
+    <form class="ml-4 mb-4" action="{{ url_for('api_upload_avatar') }}" method="post" enctype="multipart/form-data"
+        mix-post id="avatar-form" style="display:flex; align-items:flex-start; width:90%; gap:16px;">
+
+        <!-- Left side: label above input -->
+        <div style="display:flex; flex-direction:column; flex:1;">
+            <label for="avatar-upload" style="font-weight:bold; margin-bottom:4px;">
+                {{ x.lans("click_to_change_avatar_image") }}
+            </label>
+            <input type="file" name="avatar" accept="image/*" id="avatar-upload" style="width:100%;">
+        </div>
+
+        <!-- Upload button on the far right -->
+        <button type="submit" id="avatar-submit" class="btn-unblock" style="margin-left:auto; align-self:flex-end;">
+            {{ x.lans("upload") }}
+        </button>
+    </form>
+
+    <script>
+        document.getElementById('avatar-upload').addEventListener('change', function (e) {
+        });
+    </script>
+
+    <!-- dit Profile Button -->
+
+
+    <!-- Profile info form -->
+    <form class="x-dialog__form" action="{{ url_for('api_update_profile') }}" mix-post autocomplete="off">
+        <div>
+            <label for="user_email">
+                <span>{{ x.lans("email") }}</span>
+            </label>
+            <input name="user_email" id="user_email" type="text" mix-check="{{ x.REGEX_EMAIL }}"
+                value="{{ user.user_email }}">
+        </div>
+        <div>
+            <label for="user_username">
+                <span>{{ x.lans('username') }}</span> - {{ x.USER_USERNAME_MIN }} {{ x.lans('to') }} {{
+                x.USER_USERNAME_MAX
+                }} {{ x.lans('characters') }}
+            </label>
+            <input name="user_username" id="user_username" type="text" mix-check="{{ x.REGEX_USER_USERNAME }}"
+                value="{{ user.user_username }}">
+        </div>
+        <div>
+            <label for="user_first_name">
+                <span>{{ x.lans('first_name') }}</span> - {{ x.USER_FIRST_NAME_MIN }} {{ x.lans('to') }} {{
+                x.USER_FIRST_NAME_MAX }} {{ x.lans('characters') }}
+            </label>
+            <input name="user_first_name" id="user_first_name" type="text" mix-check="{{ x.REGEX_USER_USERNAME }}"
+                value="{{ user.user_first_name }}">
+        </div>
+        <button class="x-dialog__btn" mix-default="{{ x.lans('update_profile') }}"
+            mix-await="{{ x.lans('updating_profile') }}">
+            {{ x.lans('update_profile') }}
+        </button>
+    </form>
+
+    <div class="py-8 d-flex flex-col a-items-center">
+        <a href="{{ url_for('api_delete_profile') }}" class="text-c-red" hover="cursor-pointer">
+            {{ x.lans('delete_account') }}
+        </a>
+    </div>
 </div>

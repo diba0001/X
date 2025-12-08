@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: mariadb
--- Generation Time: Dec 07, 2025 at 02:52 PM
+-- Generation Time: Dec 08, 2025 at 01:45 PM
 -- Server version: 10.6.20-MariaDB-ubu2004
 -- PHP Version: 8.2.27
 
@@ -20,6 +20,18 @@ SET time_zone = "+00:00";
 --
 -- Database: `x`
 --
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `bookmarks`
+--
+
+CREATE TABLE `bookmarks` (
+  `bookmark_user_fk` char(32) NOT NULL,
+  `bookmark_post_fk` char(32) NOT NULL,
+  `bookmarked_at` bigint(20) UNSIGNED NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -233,6 +245,13 @@ INSERT INTO `users` (`user_pk`, `user_email`, `user_password`, `user_username`, 
 --
 
 --
+-- Indexes for table `bookmarks`
+--
+ALTER TABLE `bookmarks`
+  ADD PRIMARY KEY (`bookmark_user_fk`,`bookmark_post_fk`),
+  ADD KEY `bookmark_post_fk` (`bookmark_post_fk`);
+
+--
 -- Indexes for table `comments`
 --
 ALTER TABLE `comments`
@@ -277,6 +296,13 @@ ALTER TABLE `users`
 --
 -- Constraints for dumped tables
 --
+
+--
+-- Constraints for table `bookmarks`
+--
+ALTER TABLE `bookmarks`
+  ADD CONSTRAINT `bookmarks_ibfk_1` FOREIGN KEY (`bookmark_user_fk`) REFERENCES `users` (`user_pk`) ON DELETE CASCADE,
+  ADD CONSTRAINT `bookmarks_ibfk_2` FOREIGN KEY (`bookmark_post_fk`) REFERENCES `posts` (`post_pk`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `follows`
