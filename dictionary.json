@@ -558,5 +558,75 @@
         "english": "Logging in...",
         "danish": "Logger ind...",
         "spanish": "Iniciando sesión..."
+    },
+    "image_too_large": {
+        "english": "Image too large. Maximum 5MB.",
+        "danish": "Billedet er for stort. Maksimum 5 MB.",
+        "spanish": "La imagen es demasiado grande. Máximo 5 MB."
+    },
+    "invalid_file_type": {
+        "english": "Invalid file type. Only images allowed.",
+        "danish": "Ugyldig filtype. Kun billeder er tilladt.",
+        "spanish": "Tipo de archivo no válido. Solo se permiten imágenes."
+    },
+    "post_deleted": {
+        "english": "Your post has been deleted",
+        "danish": "Dit opslag er blevet slettet.",
+        "spanish": "Tu publicación ha sido eliminada."
+    },
+    "avatar_updated": {
+        "english": "Avatar updated successfully!",
+        "danish": "Avatar er blevet opdateret!",
+        "spanish": "¡Avatar actualizado correctamente!"
+    },
+    "could_not_upload_avatar": {
+        "english": "Could not upload avatar:",
+        "danish": "Kunne ikke uploade avatar",
+        "spanish": "No se pudo subir el avatar"
+    },
+    "must_be_logged_in": {
+        "english": "You must be logged in",
+        "danish": "Du skal være logget ind",
+        "spanish": "Debes iniciar sesión"
+    },
+    "post_not_found": {
+        "english": "Post not found or you don't have permission",
+        "danish": "Opslag ikke fundet, eller du har ikke tilladelse",
+        "spanish": "Publicación no encontrada o no tienes permiso"
+    },
+    "could_not_load_post": {
+        "english": "Could not load post",
+        "danish": "Kunne ikke indlæse opslag",
+        "spanish": "No se pudo cargar la publicación"
+    },
+    "post_updated": {
+        "english": "Post updated successfully!",
+        "danish": "Opslag opdateret!",
+        "spanish": "¡Publicación actualizada!"
+    },
+    "edit_profile": {
+        "english": "Edit profile",
+        "danish": "Opdater profil",
+        "spanish": "Actualizar perfil"
+    },
+    "followers": {
+        "english": "Followers",
+        "danish": "Dine følgere",
+        "spanish": "Tus seguidores"
+    },
+    "posts": {
+        "english": "Posts",
+        "danish": "Opslag",
+        "spanish": "Publicaciones"
+    },
+    "likes": {
+        "english": "Likes",
+        "danish": "Likes",
+        "spanish": "Likes"
+    },
+    "no_posts_yet": {
+        "english": "No posts yet",
+        "danish": "Du har ingen opslag",
+        "spanish": "Sin publicaciones"
     }
 }
