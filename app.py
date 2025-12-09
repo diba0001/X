@@ -1645,10 +1645,13 @@ def api_delete_post(post_pk):
 
         db, cursor = x.db()
 
+        q_delete_comments = "DELETE FROM comments WHERE comment_post_fk = %s"
+        cursor.execute(q_delete_comments, (post_pk,))
 
         # Delete post from database IF its the users post
         q = "DELETE FROM posts WHERE post_pk = %s and post_user_fk = %s"
         cursor.execute(q, (post_pk, g.user["user_pk"],))
+        
         db.commit()
 
         toast_ok = render_template("___toast_ok.html", message=x.lans('post_deleted'))
