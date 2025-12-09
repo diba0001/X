@@ -674,7 +674,7 @@ def api_admin_block_user():
 
         db, cursor = x.db()
 
-        # Blokker brugeren
+        # Blocks the user by setting the blocked timestamp
         cursor.execute(
             "UPDATE users SET user_blocked_at = %s WHERE user_pk = %s",
             (int(time.time()), blocked_user_pk)
@@ -682,7 +682,7 @@ def api_admin_block_user():
 
         current_user_pk = admin_user["user_pk"]
 
-        # SUGGESTIONS (who to follow) for den nuværende bruger
+        # Removes the blocked user from SUGGESTIONS (who to follow) for the current user
         q = """
             SELECT users.*, 
                 (SELECT COUNT(*) 
@@ -709,7 +709,7 @@ def api_admin_block_user():
             suggestion["is_followed_by_user"] = suggestion["is_followed_by_user"] > 0
             suggestion.pop("user_password", None)
 
-        # FOLLOWING for den nuværende bruger
+        # Removes the blocked user FOLLOWING for the current user
         q = """
             SELECT 
                 users.*, 
@@ -732,8 +732,6 @@ def api_admin_block_user():
             follow.pop("user_password", None)
 
         db.commit()
-
-        # (Mail-delen lader vi være som den er)
 
         btn_html = render_template("___button_unblock_user.html", user_username=username, user_pk=blocked_user_pk)
         toast_ok = render_template("___toast_ok.html", message=x.lans("toast_user_blocked"))
@@ -774,7 +772,7 @@ def api_admin_unblock_user():
 
         current_user_pk = admin_user["user_pk"]
 
-        # SUGGESTIONS (who to follow) for den nuværende bruger
+        # SUGGESTIONS (who to follow) for the current user
         q = """
             SELECT users.*, 
                 (SELECT COUNT(*) 
@@ -801,7 +799,7 @@ def api_admin_unblock_user():
             suggestion["is_followed_by_user"] = suggestion["is_followed_by_user"] > 0
             suggestion.pop("user_password", None)
 
-        # FOLLOWING for den nuværende bruger
+        # FOLLOWING for the current user
         q = """
             SELECT 
                 users.*, 
@@ -1337,7 +1335,7 @@ def unfollow_user():
 @app.route("/comments", methods=["GET", "POST"])
 def comments():
     try:
-        # ÅBN COMMENTS (POST fra mix-post)
+        # Opens the comments
         if request.method == "POST":
             post_pk = request.form.get("post_pk", "")
             if not post_pk:
@@ -1349,7 +1347,7 @@ def comments():
 
             db, cursor = x.db()
 
-            # 1. Hent alle comments + tilhørende users
+            # 1. GET the comments +  the users that belong to the comments
             q_get_all_comments = """
                 SELECT
                     comments.comment_pk,
@@ -1371,7 +1369,7 @@ def comments():
             cursor.execute(q_get_all_comments, (post_pk,))
             comments = cursor.fetchall()
             
-            # 2. Hent antal kommentarer
+            # 2. Get current comments count
             q_get_count = "SELECT post_total_comments FROM posts WHERE post_pk = %s"
             cursor.execute(q_get_count, (post_pk,))
             comments_count = cursor.fetchone()["post_total_comments"]
@@ -1390,7 +1388,7 @@ def comments():
                 </browser>
             """
         
-        # LUK COMMENTS (GET fra mix-get)
+        # Closes the comments
         if request.method == "GET":
             post_pk = request.args.get("post_pk", "")
             if not post_pk:
@@ -1436,23 +1434,22 @@ def api_create_comment():
         comment_pk = uuid.uuid4().hex
         current_epoch = int(time.time()) 
 
-        # Hent sprog ligesom i /comments
         lan = session["user"]["user_language"]
 
         db, cursor = x.db()
 
-        # 1. Indsæt kommentaren
+        # 1. Insert new comment
         q = "INSERT INTO comments VALUES(%s, %s, %s, %s, %s, %s)"
         cursor.execute(q, (comment_pk, post_pk, g.user["user_pk"], comment_text, 0, current_epoch))
 
-        # 2. Hent ny total comment count
+        # 2. Get the new total comments count
         q_get_count = "SELECT post_total_comments FROM posts WHERE post_pk = %s"
         cursor.execute(q_get_count, (post_pk,))
         new_count = cursor.fetchone()["post_total_comments"]
 
         db.commit()
 
-        # Byg en comment, der ligner JOIN-rowen
+        # Build comment object for rendering
         comment = {
             "comment_pk": comment_pk,
             "comment_post_fk": post_pk,
@@ -1571,47 +1568,45 @@ def api_create_post():
                 # Store just the filename for database
                 post_media_path = f"images/{unique_filename}"
         
-        db, cursor = x.db()
-        
-            # --- FIX: Added post_total_likes and post_blocked_at to the query and values ---
-        q = """INSERT INTO posts 
-            (post_pk, post_user_fk, post_message, post_total_likes, post_media_path, post_blocked_at, post_created_at, post_deleted_at, post_updated_at) 
-            VALUES(%s, %s, %s, %s, %s, %s, %s, %s, 0)"""
+                db, cursor = x.db()
+                
+                q = """INSERT INTO posts 
+                    (post_pk, post_user_fk, post_message, post_total_likes, post_media_path, post_blocked_at, post_created_at, post_deleted_at, post_updated_at) 
+                    VALUES(%s, %s, %s, %s, %s, %s, %s, %s, 0)"""
 
-        cursor.execute(q, (
-        post_pk,
-        g.user["user_pk"],
-        post,
-        0,
-        post_media_path,
-        0,
-        current_epoch, 
-        0
-    ))
-            # -------------------------------------------------------------------------------
+                cursor.execute(q, (
+                post_pk,
+                g.user["user_pk"],
+                post,
+                0,
+                post_media_path,
+                0,
+                current_epoch, 
+                0
+                ))
         
-        db.commit()
-        
-        toast_ok = render_template("___toast_ok.html", message=x.lans('post_live'))
-        tweet = {
-            "post_pk": post_pk,
-            "post_user_fk": g.user["user_pk"] ,
-            "user_first_name": g.user["user_first_name"],
-            "user_last_name": g.user["user_last_name"],
-            "user_username": g.user["user_username"],
-            "user_avatar_path": g.user["user_avatar_path"],
-            "post_message": post,
-            "post_pk": post_pk,
-            "post_media_path": post_media_path,
-            "post_created_at": None
-        }
-        html_post_container = render_template("___post_container.html")
-        html_post = render_template("_tweet.html", tweet=tweet, user=g.user)
-        return f"""
-            <browser mix-bottom="#toast">{toast_ok}</browser>
-            <browser mix-top="#posts">{html_post}</browser>
-            <browser mix-replace="#post_container">{html_post_container}</browser>
-        """
+                db.commit()
+                
+                toast_ok = render_template("___toast_ok.html", message=x.lans('post_live'))
+                tweet = {
+                    "post_pk": post_pk,
+                    "post_user_fk": g.user["user_pk"] ,
+                    "user_first_name": g.user["user_first_name"],
+                    "user_last_name": g.user["user_last_name"],
+                    "user_username": g.user["user_username"],
+                    "user_avatar_path": g.user["user_avatar_path"],
+                    "post_message": post,
+                    "post_pk": post_pk,
+                    "post_media_path": post_media_path,
+                    "post_created_at": None
+                }
+                html_post_container = render_template("___post_container.html")
+                html_post = render_template("_tweet.html", tweet=tweet, user=g.user)
+                return f"""
+                    <browser mix-bottom="#toast">{toast_ok}</browser>
+                    <browser mix-top="#posts">{html_post}</browser>
+                    <browser mix-replace="#post_container">{html_post_container}</browser>
+                """
     except Exception as ex:
         ic(ex)
         
@@ -1650,7 +1645,7 @@ def api_delete_post(post_pk):
     
         # Check if user is logged in
         if not g.user:
-            return "invalid user", 400 ## TODO: add a HTTP requests på de andre
+            return "invalid user", 400
 
         db, cursor = x.db()
 
@@ -1696,7 +1691,7 @@ def api_delete_comment():
 
         db, cursor = x.db()
 
-        # 1. Slet kommentaren, kun hvis den tilhører brugeren og det rigtige post
+        # 1. Delete comment but only if it belongs to the user
         q = """
         DELETE FROM comments 
         WHERE comment_pk = %s 
@@ -1710,7 +1705,7 @@ def api_delete_comment():
             db.rollback()
             return "not allowed", 403
 
-        # 2. Hent ny total comment count
+        # 2. Get the new total comments count
         q_get_count = "SELECT post_total_comments FROM posts WHERE post_pk = %s"
         cursor.execute(q_get_count, (post_pk,))
         new_count = cursor.fetchone()["post_total_comments"]
@@ -1723,7 +1718,7 @@ def api_delete_comment():
             post_pk=post_pk
         )
 
-        # Hvis der stadig er kommentarer tilbage
+        # if there are STILL comments (new_count > 0)
         if new_count > 0:
             return f"""
                 <browser mix-remove="#comment_{comment_pk}"></browser>
@@ -1732,7 +1727,7 @@ def api_delete_comment():
                 </browser>  
             """
 
-        # Hvis der IKKE er flere kommentarer (new_count == 0)
+        # if there are NO comments left (new_count == 0)
         no_comment_html = f"""
             <p id="no_comment_{post_pk}" class="text-a-center">
                 There is no comment on this post yet.
@@ -1777,7 +1772,7 @@ def api_edit_comment():
 
         db, cursor = x.db()
 
-        # Hent comment for at vise i form
+        # Get the comment text
         q = """
         SELECT comment_text, comment_user_fk 
         FROM comments 
@@ -1829,7 +1824,7 @@ def api_update_comment():
 
         db, cursor = x.db()
 
-        # Opdater kun hvis bruger ejer kommentaren
+        # Update comment only if it belongs to the user
         q_update = """
         UPDATE comments 
         SET comment_text = %s,
@@ -1839,7 +1834,7 @@ def api_update_comment():
         cursor.execute(q_update, (new_text,current_epoch, comment_pk, g.user["user_pk"]))
         db.commit()
 
-        # Henter den opdaterede kommentes timestamp
+        # Get the updated comment created_at
         q_get = """
         SELECT comment_created_at, comment_post_fk
         FROM comments
@@ -1851,10 +1846,9 @@ def api_update_comment():
         if not the_updated_comment:
             return "comment_not_found", 404
 
-        # Hent sprog ligesom i /comments
         lan = session["user"]["user_language"]
 
-        # Lav et opdateret comment-objekt, der matcher det dine templates forventer
+        # Build updated comment object for rendering
         comment = {
             "comment_pk": comment_pk,
             "comment_post_fk": post_pk,
@@ -1947,12 +1941,12 @@ def api_cancel_edit_comment():
 def edit_post(post_pk):
     try:
         
-        # Brug session
+        # Checks if user is logged in
         if not g.user:
             toast_error = render_template("___toast_error.html", message=x.lans("must_be_logged_in"))
             return f"""<browser mix-bottom="#toast">{toast_error}</browser>""", 401
         
-        # Valider post_pk (VIGTIGT for sikkerhed!)
+        # Validate post_pk
         post_pk = x.validate_uuid4_without_dashes(post_pk)
         
         # get post from db
@@ -1987,7 +1981,7 @@ def cancel_edit_post(post_pk):
 
         lan = session["user"]["user_language"]
 
-        # SQL — hent ét post med alle user-felter
+        # SQL — get the original post without edits
         q = """
             SELECT 
                 p.post_pk,
@@ -2023,7 +2017,7 @@ def cancel_edit_post(post_pk):
         if not post:
             return "post_not_found", 404
 
-        # Konverter like-count til Boolean
+        # Converte like-count to Boolean
         post["is_liked_by_user"] = post["is_liked_by_user"] > 0
 
         html_post = render_template("_tweet.html", tweet=post, user=g.user, lan=lan)
@@ -2260,14 +2254,13 @@ def api_delete_profile():
         if "cursor" in locals(): cursor.close()
         if "db" in locals(): db.close()
 
-# ##############################
 
 ##############################
 @app.route("/api-upload-avatar", methods=["POST"])
 def api_upload_avatar():
-    """
-    Handles avatar/profile picture upload
-    """
+
+# Handles avatar/profile picture upload
+
     try:
         # Check if user is logged in
         if not g.get("user"):
