@@ -258,7 +258,7 @@ def signup(lan = "english"):
             user_blocked_at = 0
 
             user_hashed_password = generate_password_hash(user_password)
-            verification_link = f"http://127.0.0.1:800/verify-account?key={user_verification_key}"
+            verification_link = f"{x.baseURL}/verify-account?key={user_verification_key}"
 
             # Connect to the database
             q = "INSERT INTO users VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
