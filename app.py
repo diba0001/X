@@ -1517,8 +1517,6 @@ def api_create_post():
     cursor = None
     
     try:
-        print("Files in request:", request.files)
-        print("Form data:", request.form)
 
         if not g.user: return "invalid user"       
 
@@ -1555,7 +1553,6 @@ def api_create_post():
                 if not os.path.exists(upload_dir):
                     # NOTE: os.makedirs is commented out as it requires a local file system which is not available here.
                     os.makedirs(upload_dir) 
-                    print(f"Directory check: {upload_dir}")
                 
                 # Save file (Mocking file save)
                 file_path = os.path.join('static/images', unique_filename)
@@ -1939,44 +1936,29 @@ def api_cancel_edit_comment():
 @x.no_cache
 def edit_post(post_pk):
     try:
-        # Log the incoming post_pk
-        print(f"DEBUG: Received post_pk: {post_pk}")
         
         # Brug session
         if not g.user:
             toast_error = render_template("___toast_error.html", message=x.lans("must_be_logged_in"))
             return f"""<browser mix-bottom="#toast">{toast_error}</browser>""", 401
         
-        print(f"DEBUG: User logged in: {g.user.get('user_pk')}")
-        
         # Valider post_pk (VIGTIGT for sikkerhed!)
         post_pk = x.validate_uuid4_without_dashes(post_pk)
-        print(f"DEBUG: Validated post_pk: {post_pk}")
         
         # get post from db
         db, cursor = x.db()
         q = "SELECT * FROM posts WHERE post_pk = %s AND post_user_fk = %s AND post_deleted_at = 0"
         cursor.execute(q, (post_pk, g.user["user_pk"]))
         post = cursor.fetchone()
-        
-        print(f"DEBUG: Post found: {post is not None}")
-        if post:
-            print(f"DEBUG: Post data: {post}")
  
         if not post:
             toast_error = render_template("___toast_error.html", message=x.lans("post_not_found"))
             return f"""<browser mix-bottom="#toast">{toast_error}</browser>""", 403
         
-        print("DEBUG: About to render template")
         edit_post_html = render_template("_edit_post.html", post=post)
-        print(f"DEBUG: Template rendered successfully, length: {len(edit_post_html)}")
         return f'<template mix-replace="#post_container_{post_pk}">{edit_post_html}</template>'
         
     except Exception as ex:
-        print(f"ERROR: Exception occurred: {type(ex).__name__}")
-        print(f"ERROR: Exception message: {str(ex)}")
-        import traceback
-        print(f"ERROR: Full traceback:\n{traceback.format_exc()}")
         ic(ex)
         toast_error = render_template("___toast_error.html", message=x.lans("could_not_load_post"))
         return f"""<browser mix-bottom="#toast">{toast_error}</browser>""", 500
