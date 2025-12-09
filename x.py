@@ -45,6 +45,7 @@ def lans(key):
 ##############################
 def db():
     try:
+        # Connect to the database (both pythonanywhere and local)
         db = mysql.connector.connect(
             host     = os.environ.get("DB_HOST", "mariadb"),
             user     = os.environ.get("DB_USER", "root"),
@@ -53,8 +54,8 @@ def db():
         )
         cursor = db.cursor(dictionary=True)
         return db, cursor
-    except Exception as e:
-        print(e, flush=True)
+    except Exception as ex:
+        print(ex, flush=True)
         raise Exception("Twitter exception - Database under maintenance", 500)
 
 
