@@ -25,9 +25,22 @@ baseURL = os.environ.get("BASE_URL", "http://127.0.0.1:800")
 ##############################
  
 def lans(key):
-    with open("dictionary.json", 'r', encoding='utf-8') as file:
-        data = json.load(file)
-    return data[key][default_language]
+    try:
+        # 1. Get the folder where this python file lives
+        current_folder = os.path.dirname(os.path.abspath(__file__))
+        
+        # 2. Build the full path to dictionary.json
+        full_path = os.path.join(current_folder, "dictionary.json")
+        
+        # 3. Open using the full path
+        with open(full_path, 'r', encoding='utf-8') as file:
+            data = json.load(file)
+            
+        return data[key][default_language]
+    except Exception as e:
+        # Fallback if the file or key is missing (prevents crash)
+        print(f"Dictionary Error: {e}")
+        return key
 
 ##############################
 def db():
