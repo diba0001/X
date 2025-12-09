@@ -48,7 +48,11 @@
             </div>
         </div>
         <div class="w-full ml-2">
-            <p id="comment_text{{ comment.comment_pk }}">{{ comment.comment_text }}</p>
+            <p id="comment_text{{ comment.comment_pk }}">{{ comment.comment_text }}
+                {% if comment.comment_updated_at > 0 %}
+                <span class="edited">*Edited</span>
+                {% endif %}
+            </p>
         </div>
     </div>
 </section>

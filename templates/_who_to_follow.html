@@ -1,20 +1,16 @@
-<div class="d-flex a-items-center j-content-between">
-    <img src="/{{ suggestion.user_avatar_path if suggestion.user_avatar_path else 'static/images/avatars/unknown.jpg' }}" class="w-8 h-8 rounded-full" alt="Profile Picture">
-   <div class="w-full ml-2">
-            <p class="text-w-bold text-c-black">
-                {{ suggestion.user_first_name }} {{ suggestion.user_last_name }}
-            </p>
-            <p class="text-c-gray:+20 text-90">@{{ suggestion.user_username }}</p>
-    </div>
-    <div>
-        {% if suggestion.is_followed_by_user %}
-            {% with user_pk=suggestion.user_pk %}
-                {% include "___button_unfollow.html" %}
-            {% endwith %}
+<div class="mt-2 border-c-gray:+50 border-1 rounded-md pa-2" id="who_to_follow">
+    <h2 class="text-120 text-w-bold">{{ x.lans("who_to_follow") }}</h2>
+    <div class="">
+
+        {% if suggestions and suggestions|length > 0 %}
+        {% for suggestion in suggestions: %}
+        {% include "___user_to_follow.html" %}
+        {% endfor %}
+
         {% else %}
-            {% with user_pk=suggestion.user_pk %}
-                {% include "___button_follow.html" %}
-            {% endwith %}
+        <p>{{ x.lans("no_one_to_follow") }}</p>
         {% endif %}
+
+        <button class="text-c-tealblue text-90">{{ x.lans("show_more") }}</button>
     </div>
 </div>

@@ -638,5 +638,11 @@
         "english": "No bookmarked posts yet.",
         "danish": "Ingen bogmærkede opslag endnu.",
         "spanish": "Aún no hay publicaciones marcadas"
+
+    },
+    "no_one_to_follow": {
+        "english": "There is no one to follow",
+        "danish": "Der er ingen at følge",
+        "spanish": "No hay nadie a quien seguir"
     }
 }

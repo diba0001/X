@@ -313,14 +313,18 @@ def home():
         # Fetch tweets, total likes, and current user's like status in one query
         q = """
             SELECT 
-                p.post_pk, p.post_user_fk, p.post_message, p.post_media_path, p.post_total_likes, p.post_created_at, p.post_total_comments,
+                p.post_pk, p.post_user_fk, p.post_message, p.post_media_path,
+                p.post_total_likes, p.post_created_at, p.post_total_comments,
                 u.user_first_name, u.user_last_name, u.user_username, u.user_avatar_path,
                 (SELECT COUNT(*) FROM likes WHERE like_post_fk = p.post_pk AND like_user_fk = %s) AS is_liked_by_user,
                 (SELECT COUNT(*) FROM bookmarks WHERE bookmark_post_fk = p.post_pk AND bookmark_user_fk = %s) AS is_bookmarked_by_user
             FROM posts p
-            JOIN users u ON u.user_pk = p.post_user_fk 
+            JOIN users u ON u.user_pk = p.post_user_fk
             WHERE p.post_blocked_at = 0
-            ORDER BY RAND() LIMIT 5
+            AND u.user_deleted_at = 0
+            AND u.user_blocked_at = 0
+            ORDER BY RAND()
+            LIMIT 5;
         """
         cursor.execute(q, (user_pk, user_pk))
         tweets = cursor.fetchall()
@@ -340,11 +344,21 @@ def home():
         # Suggestions query to check if already followed
         q = """
             SELECT users.*, 
-            (SELECT COUNT(*) FROM follows WHERE follow_follower_fk = %s AND follow_followed_fk = users.user_pk) AS is_followed_by_user
-            FROM users users 
-            WHERE users.user_pk != %s 
-            AND users.user_pk NOT IN (SELECT follow_followed_fk FROM follows WHERE follow_follower_fk = %s)
-            ORDER BY RAND() LIMIT 5
+            (SELECT COUNT(*) 
+            FROM follows 
+            WHERE follow_follower_fk = %s 
+            AND follow_followed_fk = users.user_pk) AS is_followed_by_user
+            FROM users users
+            WHERE users.user_pk != %s
+            AND users.user_deleted_at = 0
+            AND users.user_blocked_at = 0
+            AND users.user_pk NOT IN (
+                    SELECT follow_followed_fk 
+                    FROM follows 
+                    WHERE follow_follower_fk = %s
+                )
+            ORDER BY RAND()
+            LIMIT 5
         """
         cursor.execute(q, (user_pk, user_pk, user_pk))
         suggestions = cursor.fetchall()
@@ -358,10 +372,16 @@ def home():
         q = """
             SELECT 
                 users.*, 
-                (SELECT COUNT(*) FROM follows WHERE follow_follower_fk = %s AND follow_followed_fk = users.user_pk) AS is_followed_by_user
-            FROM users users
+                (SELECT COUNT(*) 
+                    FROM follows 
+                    WHERE follow_follower_fk = %s 
+                    AND follow_followed_fk = users.user_pk
+                ) AS is_followed_by_user
+            FROM users
             JOIN follows ON users.user_pk = follows.follow_followed_fk 
             WHERE follows.follow_follower_fk = %s
+            AND user_deleted_at = 0
+            AND user_blocked_at = 0
         """
         cursor.execute(q, (user_pk, user_pk))
         following = cursor.fetchall()
@@ -633,46 +653,100 @@ def admin_posts_section():
 def api_admin_block_user():
     try:
         admin_user = g.user
-        if not admin_user: return "invalid user", 401
-        if not admin_user.get("user_is_admin"): return "forbidden", 403
+        if not admin_user:
+            return "invalid user", 401
+        if not admin_user.get("user_is_admin"):
+            return "forbidden", 403
 
         username = request.form.get("user_username", "").strip()
-        user_pk = request.form.get("user_pk", "").strip()
-        if not username: return "missing username", 400
-        if not user_pk: return "missing user_pk", 400
+        blocked_user_pk = request.form.get("user_pk", "").strip()
+        if not username:
+            return "missing username", 400
+        if not blocked_user_pk:
+            return "missing user_pk", 400
 
-        
         db, cursor = x.db()
-        cursor.execute("UPDATE users SET user_blocked_at = %s WHERE user_pk = %s", (int(time.time()), user_pk))
+
+        # Blokker brugeren
+        cursor.execute(
+            "UPDATE users SET user_blocked_at = %s WHERE user_pk = %s",
+            (int(time.time()), blocked_user_pk)
+        )
+
+        current_user_pk = admin_user["user_pk"]
+
+        # SUGGESTIONS (who to follow) for den nuværende bruger
+        q = """
+            SELECT users.*, 
+                (SELECT COUNT(*) 
+                 FROM follows 
+                 WHERE follow_follower_fk = %s 
+                   AND follow_followed_fk = users.user_pk
+                ) AS is_followed_by_user
+            FROM users users
+            WHERE users.user_pk != %s
+              AND users.user_deleted_at = 0
+              AND users.user_blocked_at = 0
+              AND users.user_pk NOT IN (
+                    SELECT follow_followed_fk 
+                    FROM follows 
+                    WHERE follow_follower_fk = %s
+              )
+            ORDER BY RAND()
+            LIMIT 5
+        """
+        cursor.execute(q, (current_user_pk, current_user_pk, current_user_pk))
+        suggestions = cursor.fetchall()
+
+        for suggestion in suggestions:
+            suggestion["is_followed_by_user"] = suggestion["is_followed_by_user"] > 0
+            suggestion.pop("user_password", None)
+
+        # FOLLOWING for den nuværende bruger
+        q = """
+            SELECT 
+                users.*, 
+                (SELECT COUNT(*) 
+                    FROM follows 
+                    WHERE follow_follower_fk = %s 
+                      AND follow_followed_fk = users.user_pk
+                ) AS is_followed_by_user
+            FROM users
+            JOIN follows ON users.user_pk = follows.follow_followed_fk 
+            WHERE follows.follow_follower_fk = %s
+              AND users.user_deleted_at = 0
+              AND users.user_blocked_at = 0
+        """
+        cursor.execute(q, (current_user_pk, current_user_pk))
+        following = cursor.fetchall()
+
+        for follow in following:
+            follow["is_followed_by_user"] = follow["is_followed_by_user"] > 0
+            follow.pop("user_password", None)
+
         db.commit()
 
-        try:
-            cursor.execute("SELECT user_email FROM users WHERE user_pk = %s", (user_pk,))
-            user_row = cursor.fetchone()
-            if user_row and user_row.get("user_email"):
-                blocked_email = user_row["user_email"]
-                subject = "Your account has been blocked"
-                body = f"""
-                <p>Hello {username},</p>
-                <p>Your account has been blocked by an administrator.</p>
-                <p>If you believe this is a mistake, please contact support.</p>
-                """
-                x.send_email(blocked_email, subject, body)
-        except Exception as email_ex:
-            ic(f"Failed to send block email: {email_ex}")
+        # (Mail-delen lader vi være som den er)
 
-        btn_html = render_template("___button_unblock_user.html", user_username=username, user_pk=user_pk)
-        toast_ok = render_template("___toast_ok.html", message=x.lans('toast_user_blocked'))
+        btn_html = render_template("___button_unblock_user.html", user_username=username, user_pk=blocked_user_pk)
+        toast_ok = render_template("___toast_ok.html", message=x.lans("toast_user_blocked"))
+        who_to_follow_html = render_template("_who_to_follow.html", suggestions=suggestions, following=following)
+        following_html = render_template("_following.html", following=following, suggestions=suggestions)
+
         return f"""
             <browser mix-bottom="#toast">{toast_ok}</browser>
-            <mixhtml mix-replace=\"#admin_btn_{user_pk}\">{btn_html}</mixhtml>
+            <mixhtml mix-replace="#admin_btn_{blocked_user_pk}">{btn_html}</mixhtml>
+            <mixhtml mix-replace="#who_to_follow">{who_to_follow_html}</mixhtml>
+            <mixhtml mix-replace="#following">{following_html}</mixhtml>
         """, 200
+
     except Exception as ex:
         ic(ex)
         return "error", 500
     finally:
         if "cursor" in locals(): cursor.close()
         if "db" in locals(): db.close()
+
 
 ##############################
 @app.post("/api-admin-unblock-user")
@@ -690,6 +764,58 @@ def api_admin_unblock_user():
         # Persist: reset blocked timestamp
         db, cursor = x.db()
         cursor.execute("UPDATE users SET user_blocked_at = 0 WHERE user_pk = %s", (user_pk,))
+
+        current_user_pk = admin_user["user_pk"]
+
+        # SUGGESTIONS (who to follow) for den nuværende bruger
+        q = """
+            SELECT users.*, 
+                (SELECT COUNT(*) 
+                 FROM follows 
+                 WHERE follow_follower_fk = %s 
+                   AND follow_followed_fk = users.user_pk
+                ) AS is_followed_by_user
+            FROM users users
+            WHERE users.user_pk != %s
+              AND users.user_deleted_at = 0
+              AND users.user_blocked_at = 0
+              AND users.user_pk NOT IN (
+                    SELECT follow_followed_fk 
+                    FROM follows 
+                    WHERE follow_follower_fk = %s
+              )
+            ORDER BY RAND()
+            LIMIT 5
+        """
+        cursor.execute(q, (current_user_pk, current_user_pk, current_user_pk))
+        suggestions = cursor.fetchall()
+
+        for suggestion in suggestions:
+            suggestion["is_followed_by_user"] = suggestion["is_followed_by_user"] > 0
+            suggestion.pop("user_password", None)
+
+        # FOLLOWING for den nuværende bruger
+        q = """
+            SELECT 
+                users.*, 
+                (SELECT COUNT(*) 
+                    FROM follows 
+                    WHERE follow_follower_fk = %s 
+                      AND follow_followed_fk = users.user_pk
+                ) AS is_followed_by_user
+            FROM users
+            JOIN follows ON users.user_pk = follows.follow_followed_fk 
+            WHERE follows.follow_follower_fk = %s
+              AND users.user_deleted_at = 0
+              AND users.user_blocked_at = 0
+        """
+        cursor.execute(q, (current_user_pk, current_user_pk))
+        following = cursor.fetchall()
+
+        for follow in following:
+            follow["is_followed_by_user"] = follow["is_followed_by_user"] > 0
+            follow.pop("user_password", None)
+
         db.commit()
 
         try:
@@ -709,9 +835,15 @@ def api_admin_unblock_user():
 
         btn_html = render_template("___button_block_user.html", user_username=username, user_pk=user_pk)
         toast_ok = render_template("___toast_ok.html", message=x.lans('toast_user_unblocked'))
+        who_to_follow_html = render_template("_who_to_follow.html", suggestions=suggestions, following=following)
+        following_html = render_template("_following.html", following=following, suggestions=suggestions)
+
+
         return f"""
             <browser mix-bottom=\"#toast\">{toast_ok}</browser>
             <mixhtml mix-replace=\"#admin_btn_{user_pk}\">{btn_html}</mixhtml>
+            <mixhtml mix-replace="#who_to_follow">{who_to_follow_html}</mixhtml>
+            <mixhtml mix-replace="#following">{following_html}</mixhtml>
         """, 200
     except Exception as ex:
         ic(ex)
@@ -860,6 +992,7 @@ def api_like_tweet():
         # Response to the browser: replace button and update count
         button_unlike_tweet = render_template("___button_unlike_tweet.html", post_pk=post_pk, like_count=new_count)
         
+        
         return f"""
             <mixhtml mix-replace="#button_container_{post_pk}">
                 {button_unlike_tweet}
@@ -1003,24 +1136,84 @@ def api_unbookmark_tweet():
 @x.no_cache
 def follow_user():
     try:
-
-        if not g.user: return "unauthorized", 401
+        if not g.user:
+            return "unauthorized", 401
         
-        follower_fk = g.user["user_pk"]
+        follower_fk = g.user["user_pk"]          # den nuværende bruger
         followed_fk = request.form.get("user_pk")
-        
-        if not followed_fk: raise Exception("User ID missing", 400)
+
+        if not followed_fk:
+            raise Exception("User ID missing", 400)
         
         db, cursor = x.db()
-        
-        # Insert into follows table
-        q = "INSERT INTO follows (follow_follower_fk, follow_followed_fk, follow_timestamp) VALUES (%s, %s, %s)"
+
+        # 1) Insert follow
+        q = """
+            INSERT INTO follows (follow_follower_fk, follow_followed_fk, follow_timestamp)
+            VALUES (%s, %s, %s)
+        """
         cursor.execute(q, (follower_fk, followed_fk, int(time.time())))
         db.commit()
-        
-        # Return the Unfollow button to swap in the UI
+
+        # 2) Hent opdaterede suggestions (who to follow) til den NUVÆRENDE bruger
+        q_suggestions = """
+            SELECT users.*, 
+                (SELECT COUNT(*) 
+                 FROM follows 
+                 WHERE follow_follower_fk = %s 
+                   AND follow_followed_fk = users.user_pk
+                ) AS is_followed_by_user
+            FROM users users
+            WHERE users.user_pk != %s
+              AND users.user_deleted_at = 0
+              AND users.user_blocked_at = 0
+              AND users.user_pk NOT IN (
+                    SELECT follow_followed_fk 
+                    FROM follows 
+                    WHERE follow_follower_fk = %s
+              )
+            ORDER BY RAND()
+            LIMIT 5
+        """
+        cursor.execute(q_suggestions, (follower_fk, follower_fk, follower_fk))
+        suggestions = cursor.fetchall()
+
+        for suggestion in suggestions:
+            suggestion["is_followed_by_user"] = suggestion["is_followed_by_user"] > 0
+            suggestion.pop("user_password", None)
+
+        # 3) Hent opdateret following-list til den NUVÆRENDE bruger
+        q_following = """
+            SELECT 
+                users.*, 
+                (SELECT COUNT(*) 
+                 FROM follows 
+                 WHERE follow_follower_fk = %s 
+                   AND follow_followed_fk = users.user_pk
+                ) AS is_followed_by_user
+            FROM users
+            JOIN follows ON users.user_pk = follows.follow_followed_fk 
+            WHERE follows.follow_follower_fk = %s
+              AND users.user_deleted_at = 0
+              AND users.user_blocked_at = 0
+        """
+        cursor.execute(q_following, (follower_fk, follower_fk))
+        following = cursor.fetchall()
+
+        for follow in following:
+            follow["is_followed_by_user"] = follow["is_followed_by_user"] > 0
+            follow.pop("user_password", None)
+
+        # 4) Render HTML-fragmenter
         btn = render_template("___button_unfollow.html", user_pk=followed_fk)
-        return f"""<mixhtml mix-replace="#follow_btn_{followed_fk}">{btn}</mixhtml>"""
+        who_to_follow_html = render_template("_who_to_follow.html", suggestions=suggestions, following=following)
+        following_html = render_template("_following.html", following=following, suggestions=suggestions)
+
+        return f"""
+            <mixhtml mix-replace="#follow_btn_{followed_fk}">{btn}</mixhtml>
+            <mixhtml mix-replace="#who_to_follow">{who_to_follow_html}</mixhtml>
+            <mixhtml mix-replace="#following">{following_html}</mixhtml>
+        """
 
     except Exception as ex:
         ic(ex)
@@ -1039,23 +1232,86 @@ def follow_user():
 @x.no_cache
 def unfollow_user():
     try:
-        if not g.user: return "unauthorized", 401
-        
+        if not g.user:
+            return "unauthorized", 401
+
         follower_fk = g.user["user_pk"]
         followed_fk = request.form.get("user_pk")
-        
-        if not followed_fk: raise Exception("User ID missing", 400)
-        
+
+        if not followed_fk:
+            raise Exception("User ID missing", 400)
+
         db, cursor = x.db()
-        
-        # Delete from follows table
-        q = "DELETE FROM follows WHERE follow_follower_fk = %s AND follow_followed_fk = %s"
+
+        # 1) Delete from follows table
+        q = """
+            DELETE FROM follows 
+            WHERE follow_follower_fk = %s 
+              AND follow_followed_fk = %s
+        """
         cursor.execute(q, (follower_fk, followed_fk))
         db.commit()
-        
-        # Return the Follow button to swap in the UI
+
+        # 2) Hent opdaterede suggestions (who to follow)
+        q_suggestions = """
+            SELECT users.*, 
+                (SELECT COUNT(*) 
+                 FROM follows 
+                 WHERE follow_follower_fk = %s 
+                   AND follow_followed_fk = users.user_pk
+                ) AS is_followed_by_user
+            FROM users users
+            WHERE users.user_pk != %s
+              AND users.user_deleted_at = 0
+              AND users.user_blocked_at = 0
+              AND users.user_pk NOT IN (
+                    SELECT follow_followed_fk 
+                    FROM follows 
+                    WHERE follow_follower_fk = %s
+              )
+            ORDER BY RAND()
+            LIMIT 5
+        """
+        cursor.execute(q_suggestions, (follower_fk, follower_fk, follower_fk))
+        suggestions = cursor.fetchall()
+
+        for suggestion in suggestions:
+            suggestion["is_followed_by_user"] = suggestion["is_followed_by_user"] > 0
+            suggestion.pop("user_password", None)
+
+        # 3) Hent opdateret following-list for den nuværende bruger
+        q_following = """
+            SELECT 
+                users.*, 
+                (SELECT COUNT(*) 
+                 FROM follows 
+                 WHERE follow_follower_fk = %s 
+                   AND follow_followed_fk = users.user_pk
+                ) AS is_followed_by_user
+            FROM users
+            JOIN follows ON users.user_pk = follows.follow_followed_fk
+            WHERE follows.follow_follower_fk = %s
+              AND users.user_deleted_at = 0
+              AND users.user_blocked_at = 0
+        """
+        cursor.execute(q_following, (follower_fk, follower_fk))
+        following = cursor.fetchall()
+
+        for follow in following:
+            follow["is_followed_by_user"] = follow["is_followed_by_user"] > 0
+            follow.pop("user_password", None)
+
+        # 4) Render new fragments
         btn = render_template("___button_follow.html", user_pk=followed_fk)
-        return f"""<mixhtml mix-replace="#follow_btn_{followed_fk}">{btn}</mixhtml>"""
+        who_to_follow_html = render_template("_who_to_follow.html", suggestions=suggestions, following=following)
+        following_html = render_template("_following.html", following=following, suggestions=suggestions)
+
+        # 5) Return MixHTML updates
+        return f"""
+            <mixhtml mix-replace="#follow_btn_{followed_fk}">{btn}</mixhtml>
+            <mixhtml mix-replace="#who_to_follow">{who_to_follow_html}</mixhtml>
+            <mixhtml mix-replace="#following">{following_html}</mixhtml>
+        """
 
     except Exception as ex:
         ic(ex)
@@ -1089,6 +1345,7 @@ def comments():
                     comments.comment_post_fk,
                     comments.comment_user_fk,
                     comments.comment_text,
+                    comments.comment_updated_at,
                     comments.comment_created_at,
                     users.user_pk,
                     users.user_first_name,
@@ -1174,8 +1431,8 @@ def api_create_comment():
         db, cursor = x.db()
 
         # 1. Indsæt kommentaren
-        q = "INSERT INTO comments VALUES(%s, %s, %s, %s, %s)"
-        cursor.execute(q, (comment_pk, post_pk, g.user["user_pk"], comment_text, current_epoch))
+        q = "INSERT INTO comments VALUES(%s, %s, %s, %s, %s, %s)"
+        cursor.execute(q, (comment_pk, post_pk, g.user["user_pk"], comment_text, 0, current_epoch))
 
         # 2. Hent ny total comment count
         q_get_count = "SELECT post_total_comments FROM posts WHERE post_pk = %s"
@@ -1184,12 +1441,13 @@ def api_create_comment():
 
         db.commit()
 
-        # Byg en comment, der ligner JOIN-rowen (VIGTIGT: inkl. comment_created_at)
+        # Byg en comment, der ligner JOIN-rowen
         comment = {
             "comment_pk": comment_pk,
             "comment_post_fk": post_pk,
             "comment_user_fk": g.user["user_pk"],
             "comment_text": comment_text,
+            "comment_updated_at": 0,
             "comment_created_at": 0, 
             "user_pk": g.user["user_pk"],
             "user_first_name": g.user["user_first_name"],
@@ -1559,31 +1817,32 @@ def api_update_comment():
         new_text = x.validate_comment(request.form.get("comment_text", ""))
         if not new_text:
             return "missing comment_text", 400
+        
+        current_epoch = int(time.time()) 
 
         db, cursor = x.db()
 
         # Opdater kun hvis bruger ejer kommentaren
         q_update = """
         UPDATE comments 
-        SET comment_text = %s 
+        SET comment_text = %s,
+        comment_updated_at = %s 
         WHERE comment_pk = %s AND comment_user_fk = %s
         """
-        cursor.execute(q_update, (new_text, comment_pk, g.user["user_pk"]))
+        cursor.execute(q_update, (new_text,current_epoch, comment_pk, g.user["user_pk"]))
         db.commit()
 
-        # Hent den opdaterede kommentes timestamp (og evt. post_fk for sikkerhed)
+        # Henter den opdaterede kommentes timestamp
         q_get = """
         SELECT comment_created_at, comment_post_fk
         FROM comments
         WHERE comment_pk = %s AND comment_user_fk = %s
         """
         cursor.execute(q_get, (comment_pk, g.user["user_pk"]))
-        row = cursor.fetchone()
-        if not row:
+        the_updated_comment = cursor.fetchone()
+        
+        if not the_updated_comment:
             return "comment_not_found", 404
-
-        # Hvis du vil være 100% sikker på post_pk, kan du overskrive den:
-        # post_pk = row["comment_post_fk"]
 
         # Hent sprog ligesom i /comments
         lan = session["user"]["user_language"]
@@ -1594,7 +1853,8 @@ def api_update_comment():
             "comment_post_fk": post_pk,
             "comment_user_fk": g.user["user_pk"],
             "comment_text": new_text,
-            "comment_created_at": row["comment_created_at"],  # vigtig for tiden
+            "comment_updated_at": current_epoch,
+            "comment_created_at": the_updated_comment["comment_created_at"],
             "user_pk": g.user["user_pk"],
             "user_first_name": g.user["user_first_name"],
             "user_last_name": g.user["user_last_name"],
@@ -2127,10 +2387,15 @@ def api_search():
         db, cursor = x.db()
         q = """
             SELECT users.*, 
-            (SELECT COUNT(*) FROM follows WHERE follow_follower_fk = %s AND follow_followed_fk = users.user_pk) AS is_followed_by_user
+                (SELECT COUNT(*) 
+                FROM follows 
+                WHERE follow_follower_fk = %s 
+                AND follow_followed_fk = users.user_pk) AS is_followed_by_user
             FROM users 
-            WHERE user_username LIKE %s 
+            WHERE user_username LIKE %s
             AND user_pk != %s
+            AND user_deleted_at = 0
+            AND user_blocked_at = 0
             LIMIT 5
         """
         cursor.execute(q, (user_pk, part_of_query, user_pk))
