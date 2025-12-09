@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: mariadb
--- Generation Time: Dec 08, 2025 at 03:28 PM
+-- Generation Time: Dec 09, 2025 at 10:20 AM
 -- Server version: 10.6.20-MariaDB-ubu2004
 -- PHP Version: 8.2.27
 
@@ -220,6 +220,7 @@ CREATE TABLE `users` (
   `user_pk` char(32) NOT NULL,
   `user_email` varchar(100) NOT NULL,
   `user_password` varchar(255) NOT NULL,
+  `user_password_reset_key` char(32) DEFAULT NULL,
   `user_username` varchar(20) NOT NULL,
   `user_first_name` varchar(20) NOT NULL,
   `user_last_name` varchar(20) NOT NULL DEFAULT '',
