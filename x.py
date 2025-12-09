@@ -1,7 +1,6 @@
-from flask import request, make_response, render_template
+from flask import request, make_response
 import mysql.connector
 import re 
-import dictionary
 import json
 from dotenv import load_dotenv
 import os

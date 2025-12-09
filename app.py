@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, session, redirect, url_for, jsonify, g
+from flask import Flask, render_template, request, session, redirect, url_for, g
 from flask_session import Session
 from werkzeug.security import generate_password_hash
 from werkzeug.security import check_password_hash
@@ -7,7 +7,6 @@ import x
 import time
 import uuid
 import os
-import dictionary
 import requests
 import io
 import csv
@@ -56,8 +55,7 @@ def forgot_password(lan = "english"):
             db.commit()
 
             # Build absolute link and inline a personalized email HTML
-            base_url = request.host_url.rstrip('/')
-            reset_url = f"{base_url}/create-new-password/{lan}?key={reset_key}"
+            reset_url = f"{x.baseURL}/create-new-password/{lan}?key={reset_key}"
 
             # Fetch username for greeting
             try:
@@ -161,7 +159,6 @@ def view_index():
 @app.context_processor
 def global_variables():
     return dict (
-        dictionary = dictionary,
         x = x,
         user = g.user
     )
@@ -395,7 +392,7 @@ def home():
 
         lan = session["user"]["user_language"]
 
-        return render_template("home.html", lan=lan, dictionary=dictionary, tweets=tweets, trends=trends, suggestions=suggestions, following=following, user=g.user)
+        return render_template("home.html", lan=lan, tweets=tweets, trends=trends, suggestions=suggestions, following=following, user=g.user)
     except Exception as ex:
         ic(ex)
         return "error"
@@ -524,7 +521,7 @@ def profile():
         cursor.execute(q, (g.user["user_pk"],))
         user = cursor.fetchone()
         lan = session["user"]["user_language"]
-        profile_html = render_template("_profile.html", x=x, user=g.user, lan=lan, dictionary=dictionary)
+        profile_html = render_template("_profile.html", x=x, user=g.user, lan=lan)
         return f"""<browser mix-update="main">{ profile_html }</browser>"""
     except Exception as ex:
         ic(ex)
