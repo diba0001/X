@@ -59,7 +59,14 @@
                 <span>{{ x.lans('first_name') }}</span> - {{ x.USER_FIRST_NAME_MIN }}  {{ x.lans('to') }} {{ x.USER_FIRST_NAME_MAX }}  {{ x.lans('characters') }}
               </label>
               <input name="user_first_name" id="user_first_name" type="text" mix-check="{{ x.REGEX_USER_USERNAME }}">
-            </div>            
+            </div>      
+            <div>
+              <label for="user_last_name">
+                <span>{{ x.lans('last_name') }}</span> - {{ x.USER_LAST_NAME_MIN }} {{ x.lans('to') }} {{
+                x.USER_LAST_NAME_MAX }} {{ x.lans('characters') }}
+              </label>
+              <input name="user_last_name" id="user_last_name" type="text" mix-check="{{ x.REGEX_USER_LAST_NAME }}">
+            </div>      
             <div>
               <label for="password">
                 <span>{{ x.lans('password') }}</span> - {{ x.USER_PASSWORD_MIN }}  {{ x.lans('to') }} {{ x.USER_PASSWORD_MAX }}  {{ x.lans('characters') }}
