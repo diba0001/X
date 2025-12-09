@@ -733,6 +733,22 @@ def api_admin_block_user():
 
         db.commit()
 
+        # Attempt to send a block notification email to the affected user
+        try:
+            cursor.execute("SELECT user_email FROM users WHERE user_pk = %s", (blocked_user_pk,))
+            user_row = cursor.fetchone()
+            if user_row and user_row.get("user_email"):
+                blocked_email = user_row["user_email"]
+                subject = "Your account has been blocked"
+                body = f"""
+                <p>Hello {username},</p>
+                <p>Your account has been blocked by an administrator.</p>
+                <p>If you believe this is a mistake, please contact support.</p>
+                """
+                x.send_email(blocked_email, subject, body)
+        except Exception as email_ex:
+            ic(f"Failed to send block email: {email_ex}")
+
         btn_html = render_template("___button_unblock_user.html", user_username=username, user_pk=blocked_user_pk)
         toast_ok = render_template("___toast_ok.html", message=x.lans("toast_user_blocked"))
         who_to_follow_html = render_template("_who_to_follow.html", suggestions=suggestions, following=following)
