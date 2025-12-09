@@ -249,7 +249,7 @@ def signup(lan = "english"):
             user_first_name = x.validate_user_first_name()
 
             user_pk = uuid.uuid4().hex
-            user_last_name = ""
+            user_last_name = x.validate_user_last_name()
             user_avatar_path = "static/images/avatars/unknown.jpg"
             user_verification_key = uuid.uuid4().hex
             user_verified_at = 0
@@ -543,6 +543,7 @@ def admin():
         SELECT user_pk, user_username, user_first_name, user_blocked_at
         FROM users
         WHERE user_is_admin = 0
+          AND user_deleted_at = 0
         ORDER BY user_username
         """
         cursor.execute(q)
@@ -2312,7 +2313,9 @@ def api_upload_avatar():
         if g.user.get("user_avatar_path") and not g.user["user_avatar_path"].startswith("http"):
             old_avatar = g.user["user_avatar_path"]  # e.g. static/images/avatars/abc.png
             fs_old = os.path.join(app.root_path, old_avatar.lstrip('/'))
-            if os.path.exists(fs_old):
+            # Skip deletion of shared default avatars
+            is_default = os.path.basename(fs_old) in {"unknown.jpg"}
+            if not is_default and os.path.exists(fs_old):
                 try:
                     os.remove(fs_old)
                     ic(f"Deleted old avatar: {fs_old}")
