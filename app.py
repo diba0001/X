@@ -310,8 +310,13 @@ def home():
         
         db, cursor = x.db()
 
-        #  Fetch tweets
-        tweets = x.get_tweets(cursor, user_pk, 0, ITEMS_TO_SHOW)
+        # CREATE A RANDOM SEED & SAVE IT
+        # This string acts as the "key" to the shuffle order
+        feed_seed = uuid.uuid4().hex
+        session['feed_seed'] = feed_seed
+
+         #  Fetch tweets
+        tweets = x.get_tweets(cursor, user_pk, 0, ITEMS_TO_SHOW, seed=feed_seed)
         
         # Convert the count to a boolean for template logic
         for tweet in tweets:
@@ -434,12 +439,16 @@ def home_comp():
         if not g.user:
             return "invalid user"
         
+        # RETRIEVE THE EXISTING SEED
+        feed_seed = session.get('feed_seed')
+
+        db, cursor = x.db()
         db, cursor = x.db()
         
         #  Fetch tweets
-        tweets = x.get_tweets(cursor, g.user["user_pk"], 0, ITEMS_TO_SHOW)
+        tweets = x.get_tweets(cursor, g.user["user_pk"], 0, ITEMS_TO_SHOW, seed=feed_seed)
 
-        html = render_template("_home_comp.html", tweets=tweets, user=g.user)
+        html = render_template("_home_comp.html", tweets=tweets, user=g.user, next_page=2)
         return f"""<browser mix-update="main">{ html }</browser>"""
     except Exception as ex:
         ic(ex)
@@ -460,10 +469,13 @@ def api_get_posts():
         next_page = int(request.args.get("page", "1"))
         offset = (next_page - 1) * ITEMS_TO_SHOW
         
+        # RETRIEVE THE EXISTING SEED
+        feed_seed = session.get('feed_seed')
+
         db, cursor = x.db()
         
         # USE THE HELPER (Fetch +1 item to see if there is a next page)
-        tweets = x.get_tweets(cursor, g.user["user_pk"], offset, ITEMS_TO_FETCH)
+        tweets = x.get_tweets(cursor, g.user["user_pk"], offset, ITEMS_TO_FETCH, seed=feed_seed)
         
         # Check if we have more items than we need to show
         has_more_items = len(tweets) > ITEMS_TO_SHOW

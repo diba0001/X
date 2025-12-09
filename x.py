@@ -168,8 +168,15 @@ def validate_comment(comment = ""):
 
 ##############################
 # Helper function to get tweets consistently
-def get_tweets(cursor, user_pk, offset, limit):
-    q = """
+def get_tweets(cursor, user_pk, offset, limit, seed=None):
+    # If a seed is provided, we sort by a hashed value of the ID + Seed.
+    # This creates a random order that STAYS the same for that specific user session.
+    if seed:
+        order_clause = f"ORDER BY MD5(CONCAT(p.post_pk, '{seed}'))"
+    else:
+        order_clause = "ORDER BY p.post_created_at DESC"
+
+    q = f"""
         SELECT 
             p.post_pk, p.post_user_fk, p.post_message, p.post_media_path,
             p.post_total_likes, p.post_created_at, p.post_total_comments,
@@ -181,14 +188,13 @@ def get_tweets(cursor, user_pk, offset, limit):
         WHERE p.post_blocked_at = 0
         AND u.user_deleted_at = 0
         AND u.user_blocked_at = 0
-        ORDER BY p.post_created_at DESC
+        {order_clause}
         LIMIT %s, %s
     """
-    # Note: We pass user_pk twice (once for likes, once for bookmarks)
+    
     cursor.execute(q, (user_pk, user_pk, offset, limit))
     tweets = cursor.fetchall()
 
-    # Normalize booleans
     for tweet in tweets:
         tweet['is_liked_by_user'] = True if tweet['is_liked_by_user'] > 0 else False
         tweet['is_bookmarked_by_user'] = True if tweet['is_bookmarked_by_user'] > 0 else False
