@@ -558,7 +558,6 @@
         "english": "Logging in...",
         "danish": "Logger ind...",
         "spanish": "Iniciando sesión..."
-
     },
     "image_too_large": {
         "english": "Image too large. Maximum 5MB.",
@@ -607,7 +606,37 @@
     },
     "edit_profile": {
         "english": "Edit profile",
-        "danish": "",
-        "spanish": ""
+        "danish": "Opdater profil",
+        "spanish": "Actualizar perfil"
+    },
+    "followers": {
+        "english": "Followers",
+        "danish": "Dine følgere",
+        "spanish": "Tus seguidores"
+    },
+    "posts": {
+        "english": "Posts",
+        "danish": "Opslag",
+        "spanish": "Publicaciones"
+    },
+    "likes": {
+        "english": "Likes",
+        "danish": "Likes",
+        "spanish": "Likes"
+    },
+    "no_posts_yet": {
+        "english": "No posts yet",
+        "danish": "Du har ingen opslag",
+        "spanish": "Sin publicaciones"
+    },
+    "click_to_change_avatar_image": {
+        "english": "Change your avatar",
+        "danish": "Ændr avatar",
+        "spanish": "Cambiar avatar"
+    },
+    "no_bookmarks_yet": {
+        "english": "No bookmarked posts yet.",
+        "danish": "Ingen bogmærkede opslag endnu.",
+        "spanish": "Aún no hay publicaciones marcadas"
     }
 }
