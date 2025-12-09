@@ -42,7 +42,7 @@
                         {% endif %}
                     </span>
 
-                    <!-- edit knap > vises kun på brugerens egne posts -->
+                    <!-- Edit button (shown only if you own it) -->
                     {% if user.user_pk == tweet.post_user_fk %}
                     <button class="edit-post-btn" mix-get="/edit-post/{{ tweet.post_pk }}"
                         mix-target="#post_container_{{ tweet.post_pk }}" title="Edit post">
