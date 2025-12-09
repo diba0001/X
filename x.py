@@ -21,7 +21,7 @@ UPLOAD_ITEM_FOLDER = './images'
 google_spread_sheet_key = os.getenv('google_spread_sheet_key')
 allowed_languages = ["english", "danish", "spanish"]
 default_language = "english"
-ic(google_spread_sheet_key)
+baseURL = os.environ.get("BASE_URL", "http://127.0.0.1:800")
 ##############################
  
 def lans(key):
@@ -33,10 +33,10 @@ def lans(key):
 def db():
     try:
         db = mysql.connector.connect(
-            host = "mariadb",
-            user = "root",  
-            password = "password",
-            database = "x"
+            host     = os.environ.get("DB_HOST", "mariadb"),
+            user     = os.environ.get("DB_USER", "root"),
+            password = os.environ.get("DB_PASS", "password"),
+            database = os.environ.get("DB_NAME", "x")
         )
         cursor = db.cursor(dictionary=True)
         return db, cursor
