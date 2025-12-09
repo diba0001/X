@@ -26,6 +26,8 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max
 app.config['SESSION_TYPE'] = 'filesystem'
 Session(app)
  
+ITEMS_TO_SHOW = 3
+ITEMS_TO_FETCH = ITEMS_TO_SHOW + 1
  
 ##############################
 @app.before_request
@@ -308,24 +310,8 @@ def home():
         
         db, cursor = x.db()
 
-        # Fetch tweets, total likes, and current user's like status in one query
-        q = """
-            SELECT 
-                p.post_pk, p.post_user_fk, p.post_message, p.post_media_path,
-                p.post_total_likes, p.post_created_at, p.post_total_comments,
-                u.user_first_name, u.user_last_name, u.user_username, u.user_avatar_path,
-                (SELECT COUNT(*) FROM likes WHERE like_post_fk = p.post_pk AND like_user_fk = %s) AS is_liked_by_user,
-                (SELECT COUNT(*) FROM bookmarks WHERE bookmark_post_fk = p.post_pk AND bookmark_user_fk = %s) AS is_bookmarked_by_user
-            FROM posts p
-            JOIN users u ON u.user_pk = p.post_user_fk
-            WHERE p.post_blocked_at = 0
-            AND u.user_deleted_at = 0
-            AND u.user_blocked_at = 0
-            ORDER BY RAND()
-            LIMIT 5;
-        """
-        cursor.execute(q, (user_pk, user_pk))
-        tweets = cursor.fetchall()
+        #  Fetch tweets
+        tweets = x.get_tweets(cursor, user_pk, 0, ITEMS_TO_SHOW)
         
         # Convert the count to a boolean for template logic
         for tweet in tweets:
@@ -393,7 +379,7 @@ def home():
 
         lan = session["user"]["user_language"]
 
-        return render_template("home.html", lan=lan, tweets=tweets, trends=trends, suggestions=suggestions, following=following, user=g.user)
+        return render_template("home.html", lan=lan, tweets=tweets, trends=trends, suggestions=suggestions, following=following, user=g.user, next_page=2)
     except Exception as ex:
         ic(ex)
         return "error"
@@ -449,16 +435,9 @@ def home_comp():
             return "invalid user"
         
         db, cursor = x.db()
-        q = """SELECT *
-            FROM users
-            JOIN posts ON user_pk = post_user_fk
-            WHERE posts.post_blocked_at = 0
-            AND users.user_blocked_at = 0
-            ORDER BY RAND()
-            LIMIT 5;"""
-        cursor.execute(q)   
-        tweets = cursor.fetchall()
-        # ic(tweets)
+        
+        #  Fetch tweets
+        tweets = x.get_tweets(cursor, g.user["user_pk"], 0, ITEMS_TO_SHOW)
 
         html = render_template("_home_comp.html", tweets=tweets, user=g.user)
         return f"""<browser mix-update="main">{ html }</browser>"""
@@ -466,7 +445,54 @@ def home_comp():
         ic(ex)
         return "error"
     finally:
-        pass
+        if "cursor" in locals(): cursor.close()
+        if "db" in locals(): db.close()
+
+
+##############################
+@app.get("/api-get-posts")
+def api_get_posts():
+    try:
+        time.sleep(1.5)  # Simulate network delay
+        if not g.user: return "Access denied", 403
+        
+        # Calculate pagination
+        next_page = int(request.args.get("page", "1"))
+        offset = (next_page - 1) * ITEMS_TO_SHOW
+        
+        db, cursor = x.db()
+        
+        # USE THE HELPER (Fetch +1 item to see if there is a next page)
+        tweets = x.get_tweets(cursor, g.user["user_pk"], offset, ITEMS_TO_FETCH)
+        
+        # Check if we have more items than we need to show
+        has_more_items = len(tweets) > ITEMS_TO_SHOW
+        tweets_to_render = tweets[:ITEMS_TO_SHOW]
+        
+        container = ""
+        for tweet in tweets_to_render:
+            container += render_template("_tweet.html", tweet=tweet, user=g.user)
+
+        # Logic for the "Show More" button
+        if has_more_items:
+            new_hyperlink = render_template("___show_more.html", next_page=next_page + 1)
+        else:
+            new_hyperlink = "" # No button if no more tweets
+
+        return f"""
+        <mix-html mix-bottom="#posts">
+            {container}
+        </mix-html>
+        <mix-html mix-replace="#show_more">
+            {new_hyperlink}
+        </mix-html>
+        """
+    except Exception as ex:
+        ic(ex)
+        return "error"
+    finally:
+        if "cursor" in locals(): cursor.close()
+        if "db" in locals(): db.close()
 
 
 ##############################
