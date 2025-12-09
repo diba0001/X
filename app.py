@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, session, redirect, url_for, g
 from flask_session import Session
 from werkzeug.security import generate_password_hash
 from werkzeug.security import check_password_hash
+from werkzeug.utils import secure_filename
 from datetime import datetime
 import x 
 import time
@@ -1555,7 +1556,6 @@ def api_create_post():
                     raise Exception("x-error file invalid type")
                 
                 # Generate unique filename
-                from werkzeug.utils import secure_filename
                 original_filename = secure_filename(file.filename)
                 unique_filename = f"{uuid.uuid4().hex}_{original_filename}"
 
@@ -2096,7 +2096,6 @@ def api_update_post(post_pk):
                 if file_ext not in allowed_extensions:
                     raise Exception("x-error file invalid type")
                 
-                from werkzeug.utils import secure_filename
                 unique_filename = f"{uuid.uuid4().hex}_{secure_filename(file.filename)}"
                 
                 upload_dir = 'static/images'

@@ -385,8 +385,8 @@
         "spanish": "Publicación desbloqueada"
     },
     "remove": {
-        "english": "Fjern",
-        "danish": "Remove",
+        "english": "Remove",
+        "danish": "Fjern",
         "spanish": "Quitar"
     },
     "this_cant_be_undone": {
