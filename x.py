@@ -167,6 +167,42 @@ def validate_comment(comment = ""):
 
 
 ##############################
+# Helper function to get tweets consistently
+def get_tweets(cursor, user_pk, offset, limit, seed=None):
+    # If a seed is provided, we sort by a hashed value of the ID + Seed.
+    # This creates a random order that STAYS the same for that specific user session.
+    if seed:
+        order_clause = f"ORDER BY MD5(CONCAT(p.post_pk, '{seed}'))"
+    else:
+        order_clause = "ORDER BY p.post_created_at DESC"
+
+    q = f"""
+        SELECT 
+            p.post_pk, p.post_user_fk, p.post_message, p.post_media_path,
+            p.post_total_likes, p.post_created_at, p.post_total_comments,
+            u.user_first_name, u.user_last_name, u.user_username, u.user_avatar_path,
+            (SELECT COUNT(*) FROM likes WHERE like_post_fk = p.post_pk AND like_user_fk = %s) AS is_liked_by_user,
+            (SELECT COUNT(*) FROM bookmarks WHERE bookmark_post_fk = p.post_pk AND bookmark_user_fk = %s) AS is_bookmarked_by_user
+        FROM posts p
+        JOIN users u ON u.user_pk = p.post_user_fk
+        WHERE p.post_blocked_at = 0
+        AND u.user_deleted_at = 0
+        AND u.user_blocked_at = 0
+        {order_clause}
+        LIMIT %s, %s
+    """
+    
+    cursor.execute(q, (user_pk, user_pk, offset, limit))
+    tweets = cursor.fetchall()
+
+    for tweet in tweets:
+        tweet['is_liked_by_user'] = True if tweet['is_liked_by_user'] > 0 else False
+        tweet['is_bookmarked_by_user'] = True if tweet['is_bookmarked_by_user'] > 0 else False
+    
+    return tweets
+
+
+##############################
 def send_email(to_email, subject, template):
     try:
         # Create a gmail fullflaskdemomail
