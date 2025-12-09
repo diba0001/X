@@ -352,6 +352,7 @@ def home():
             WHERE users.user_pk != %s
             AND users.user_deleted_at = 0
             AND users.user_blocked_at = 0
+            AND user_is_admin = 0
             AND users.user_pk NOT IN (
                     SELECT follow_followed_fk 
                     FROM follows 
@@ -382,6 +383,7 @@ def home():
             WHERE follows.follow_follower_fk = %s
             AND user_deleted_at = 0
             AND user_blocked_at = 0
+            AND user_is_admin = 0
         """
         cursor.execute(q, (user_pk, user_pk))
         following = cursor.fetchall()
@@ -449,7 +451,13 @@ def home_comp():
             return "invalid user"
         
         db, cursor = x.db()
-        q = "SELECT * FROM users JOIN posts ON user_pk = post_user_fk WHERE posts.post_blocked_at = 0 ORDER BY RAND() LIMIT 5"
+        q = """SELECT *
+            FROM users
+            JOIN posts ON user_pk = post_user_fk
+            WHERE posts.post_blocked_at = 0
+            AND users.user_blocked_at = 0
+            ORDER BY RAND()
+            LIMIT 5;"""
         cursor.execute(q)   
         tweets = cursor.fetchall()
         # ic(tweets)
@@ -1168,6 +1176,7 @@ def follow_user():
             WHERE users.user_pk != %s
               AND users.user_deleted_at = 0
               AND users.user_blocked_at = 0
+              AND users.user_is_admin = 0
               AND users.user_pk NOT IN (
                     SELECT follow_followed_fk 
                     FROM follows 
@@ -1197,6 +1206,7 @@ def follow_user():
             WHERE follows.follow_follower_fk = %s
               AND users.user_deleted_at = 0
               AND users.user_blocked_at = 0
+              AND users.user_is_admin = 0
         """
         cursor.execute(q_following, (follower_fk, follower_fk))
         following = cursor.fetchall()
@@ -1265,6 +1275,7 @@ def unfollow_user():
             WHERE users.user_pk != %s
               AND users.user_deleted_at = 0
               AND users.user_blocked_at = 0
+              AND users.user_is_admin = 0
               AND users.user_pk NOT IN (
                     SELECT follow_followed_fk 
                     FROM follows 
@@ -1294,6 +1305,7 @@ def unfollow_user():
             WHERE follows.follow_follower_fk = %s
               AND users.user_deleted_at = 0
               AND users.user_blocked_at = 0
+              AND users.user_is_admin = 0
         """
         cursor.execute(q_following, (follower_fk, follower_fk))
         following = cursor.fetchall()
@@ -1645,13 +1657,10 @@ def api_delete_post(post_pk):
 
         db, cursor = x.db()
 
-        q_delete_comments = "DELETE FROM comments WHERE comment_post_fk = %s"
-        cursor.execute(q_delete_comments, (post_pk,))
-
         # Delete post from database IF its the users post
         q = "DELETE FROM posts WHERE post_pk = %s and post_user_fk = %s"
         cursor.execute(q, (post_pk, g.user["user_pk"],))
-        
+
         db.commit()
 
         toast_ok = render_template("___toast_ok.html", message=x.lans('post_deleted'))
@@ -2323,7 +2332,7 @@ def api_upload_avatar():
         session["user"] = session_user
 
         # Send success response and redirect
-        toast_ok = render_template("___toast_ok.html", message="Avatar updated successfully!")
+        toast_ok = render_template("___toast_ok.html", message=x.lans("avatar_updated"))
         nav_html = render_template("___nav_profile_tag.html")
         avatar_url = f"/{filepath}?t={uuid.uuid4().hex}"
         return f"""
@@ -2384,6 +2393,7 @@ def api_search():
             AND user_pk != %s
             AND user_deleted_at = 0
             AND user_blocked_at = 0
+            AND user_is_admin = 0
             LIMIT 5
         """
         cursor.execute(q, (user_pk, part_of_query, user_pk))

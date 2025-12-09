@@ -42,7 +42,7 @@
     "last_name": {
         "english": "Last name",
         "danish": "Efternavn",
-        "spanish": "Efternavn"
+        "spanish": "Apellido"
     },
     "to": {
         "english": "to",
@@ -184,10 +184,10 @@
         "danish": "Søg",
         "spanish": "Buscar"
     },
-    "what_is_happening_now": {
-        "english": "What is happening now",
-        "danish": "Hvad vil du dele",
-        "spanish": "Qué está pasando ahora"
+    "what_is_happening": {
+        "english": "What's happening now",
+        "danish": "Hvad sker der i verden",
+        "spanish": "Qué está pasando en el mundo"
     },
     "follow": {
         "english": "Follow",
@@ -258,6 +258,11 @@
         "english": "Search for people",
         "danish": "Søg på personer",
         "spanish": "Busca por personas"
+    },
+    "what_is_happening_now": {
+        "english": "What is happening now",
+        "danish": "Hvad vil du dele",
+        "spanish": "Qué está pasando ahora"
     },
     "verify_your_account": {
         "english": "Verify your account",
@@ -638,7 +643,6 @@
         "english": "No bookmarked posts yet.",
         "danish": "Ingen bogmærkede opslag endnu.",
         "spanish": "Aún no hay publicaciones marcadas"
-
     },
     "no_one_to_follow": {
         "english": "There is no one to follow",
