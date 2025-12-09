@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: mariadb
--- Generation Time: Dec 09, 2025 at 10:20 AM
+-- Generation Time: Dec 09, 2025 at 12:29 PM
 -- Server version: 10.6.20-MariaDB-ubu2004
 -- PHP Version: 8.2.27
 
@@ -33,6 +33,14 @@ CREATE TABLE `bookmarks` (
   `bookmarked_at` bigint(20) UNSIGNED NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `bookmarks`
+--
+
+INSERT INTO `bookmarks` (`bookmark_user_fk`, `bookmark_post_fk`, `bookmarked_at`) VALUES
+('a5d53c2b385341e88b644a1bbbd8e131', '5c4a1ea51cc2472cbe27f030c2073b2e', 1765280007),
+('b09b7853689b490a9c1e093b0507dc8b', '3480c1614d6f44d59534f5da6f38cf56', 1765281819);
+
 -- --------------------------------------------------------
 
 --
@@ -47,6 +55,14 @@ CREATE TABLE `comments` (
   `comment_updated_at` bigint(20) NOT NULL,
   `comment_created_at` bigint(20) UNSIGNED NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `comments`
+--
+
+INSERT INTO `comments` (`comment_pk`, `comment_post_fk`, `comment_user_fk`, `comment_text`, `comment_updated_at`, `comment_created_at`) VALUES
+('b48c8e9498a24463919d3fdfc727d13d', 'd7d810e76ed845a9aae051e0189495e7', 'b09b7853689b490a9c1e093b0507dc8b', 'Messi is better btw;)', 0, 1765281846),
+('ba22fc97ef46476a99513d0e8fe29e55', 'c4fa0640c5784ff1af6ac0ac06b03997', 'a5d53c2b385341e88b644a1bbbd8e131', 'Welcome aboard, buddy!', 0, 1765279985);
 
 --
 -- Triggers `comments`
@@ -85,10 +101,8 @@ CREATE TABLE `follows` (
 --
 
 INSERT INTO `follows` (`follow_follower_fk`, `follow_followed_fk`, `follow_timestamp`) VALUES
-('', '88a93bb5267e443eb0047f421a7a2f34', 1765207439),
-('', '9860c6174a3141c5b1e7c8b3638b2f2b', 1765207439),
-('9860c6174a3141c5b1e7c8b3638b2f2b', '805a39cd8c854ee8a83555a308645bf5', 1765103020),
-('9860c6174a3141c5b1e7c8b3638b2f2b', '88a93bb5267e443eb0047f421a7a2f34', 1765100873);
+('9860c6174a3141c5b1e7c8b3638b2f2b', '88a93bb5267e443eb0047f421a7a2f34', 1765100873),
+('b09b7853689b490a9c1e093b0507dc8b', '9860c6174a3141c5b1e7c8b3638b2f2b', 1765281336);
 
 -- --------------------------------------------------------
 
@@ -107,16 +121,10 @@ CREATE TABLE `likes` (
 --
 
 INSERT INTO `likes` (`like_user_fk`, `like_post_fk`, `like_timestamp`) VALUES
-('', '3ccd07dc9eb64fe4a9e7059ada79d61d', 1765186724),
-('', '7d122d1016a742ea80ed7c7936f04f61', 1765104385),
-('', 'bcaa6df8880e411a9c25deaafae2314a', 1765183418),
-('', 'c4ddb3c171a34cb2903bc98d03883d24', 1765113823),
-('', 'e428fa103e6c41c5948c553b0a64b7b9', 1765186434),
-('', 'fca0b7f700de4682909ec8372744b8fd', 1765188567),
-('9860c6174a3141c5b1e7c8b3638b2f2b', '7d122d1016a742ea80ed7c7936f04f61', 1765104535),
-('9860c6174a3141c5b1e7c8b3638b2f2b', 'c4ddb3c171a34cb2903bc98d03883d24', 1765102886),
-('9860c6174a3141c5b1e7c8b3638b2f2b', 'd60b8eedfcb6420587b2f528566386df', 1765104536),
-('9860c6174a3141c5b1e7c8b3638b2f2b', 'fca0b7f700de4682909ec8372744b8fd', 1765104530);
+('a5d53c2b385341e88b644a1bbbd8e131', '3480c1614d6f44d59534f5da6f38cf56', 1765280013),
+('a5d53c2b385341e88b644a1bbbd8e131', '5c4a1ea51cc2472cbe27f030c2073b2e', 1765280004),
+('b09b7853689b490a9c1e093b0507dc8b', '3480c1614d6f44d59534f5da6f38cf56', 1765280046),
+('b09b7853689b490a9c1e093b0507dc8b', 'c4fa0640c5784ff1af6ac0ac06b03997', 1765280042);
 
 --
 -- Triggers `likes`
@@ -162,33 +170,13 @@ CREATE TABLE `posts` (
 --
 
 INSERT INTO `posts` (`post_pk`, `post_user_fk`, `post_message`, `post_total_likes`, `post_total_comments`, `post_media_path`, `post_blocked_at`, `post_deleted_at`, `post_updated_at`, `post_created_at`) VALUES
-('070678cb348846839b79d2ed6834f743', '88a93bb5267e443eb0047f421a7a2f34', 'a post with a pic', 0, 0, 'images/aa147d759fcb4ceeb7dc8d1e45939aa4_twitter_erd_crowsfoot.png', 0, 0, 1764861780, 1764861751),
-('0e541eea9ead41db881c56f4802290ba', '9860c6174a3141c5b1e7c8b3638b2f2b', 'hej', 0, 0, '', 0, 0, 0, 1765105787),
-('28dd4c1671634d73acd29a0ab109bef1', '805a39cd8c854ee8a83555a308645bf5', 'My first super life !', 1, 0, 'images/post_3.jpg', 0, 0, 0, 1764762106),
-('299323cf81924589b0de265e715a1f9e', '225a9fc15b8f409aa5c8ee7eafee516b', 'test3', 1, 0, 'images/post_1.jpg', 0, 0, 0, 1764762106),
-('2c47ae1bc8f249109157eeda70504ac5', '88a93bb5267e443eb0047f421a7a2f34', 'A picture', 0, 0, 'images/0026ecf80e9341c1b534c155f8eb6c8e_IMG_6962.jpeg', 0, 0, 0, 1764861546),
-('2e6532f3d6084a54afd4f49a32cc24cf', '5388749', 'hi', 0, 0, '', 0, 0, 0, 1764854836),
-('3229ec27b6a247f8b44cf3679dae85db', '9860c6174a3141c5b1e7c8b3638b2f2b', 'hej', 0, 0, '', 0, 0, 0, 1765110195),
-('3ccd07dc9eb64fe4a9e7059ada79d61d', '', 'malthe og emil dater mange gange, elsker dem', 1, 0, '', 0, 0, 1765186957, 1764859669),
-('4634e7714feb42aea9cb055b85f352fc', '237485250205824500245', 'hi', 0, 0, '', 0, 0, 0, 1764855088),
-('508f6200791446d49165c0cccd7d7268', '240927592750274', 'hi', 0, 0, 'images/3d76bdd0a6414c0b89a9dc7dc1c7c3f5_twitter_erd_crowsfoot.png', 0, 0, 0, 1764854203),
-('560d69eab9fc41da85f0df49df1a00ae', '', 'hej14:59', 0, 0, '', 0, 0, 1765183384, 1765115941),
-('5ed0a8395020449ba2c5abe294689d3b', '88a93bb5267e443eb0047f421a7a2f34', 'emil elzker kanelgifflz', 0, 0, 'images/7e73abc8fda8474595a145387d1abbc7_favicon-16x16.png', 0, 0, 1764860941, 1764859867),
-('663f6045b08c49aeae88ae10eb1d2625', '', 'claus', 0, 0, '', 0, 0, 0, 1764859813),
-('7d122d1016a742ea80ed7c7936f04f61', '9860c6174a3141c5b1e7c8b3638b2f2b', 'jeg hader rasmud', 2, 0, '', 1765116505, 0, 1765100528, 1765100480),
-('7d6f40e626c54efaa32494bce5f739d7', '88a93bb5267e443eb0047f421a7a2f34', 'test2', 1, 0, 'images/post_2.jpg', 0, 0, 1764860711, 1764762106),
-('9605bb608a324ff185fc5033744d62ad', '', 'emil elsker majskiks', 0, 0, '', NULL, 0, 0, 1764859234),
-('99fefea24ea5419da19ed1f8cf8e9499', '225a9fc15b8f409aa5c8ee7eafee516b', 'wow', 0, 0, 'images/post_1.jpg', 1764838458, 0, 0, 1764762106),
-('ab2f3c649a444eb588cd8307c6f8ae56', '2342304205092', 'hi', 0, 0, '', 0, 0, 0, 1764854993),
-('bcaa6df8880e411a9c25deaafae2314a', '225a9fc15b8f409aa5c8ee7eafee516b', 'test', 3, 0, '', 0, 0, 1765100282, 1764762106),
-('c0e92aad8b6c46c6899d59ecc5e8105a', '', 'hej', 0, 0, '', NULL, 0, 0, 1764858769),
-('c156b4470e084e529cc5189c44b9d030', '', 'emil', 0, 0, '', NULL, 0, 0, 1764858807),
-('c4dca608ab1c4e788d34a818658313ed', '235702945879450', 'hi', 0, 0, 'images/66b1f63a3bdd45e28805007e28eb02cd_twitter_erd_crowsfoot.png', 0, 0, 0, 1764854012),
-('c4ddb3c171a34cb2903bc98d03883d24', '', 'hi', 2, 0, '', 0, 0, 0, 1764854975),
-('d60b8eedfcb6420587b2f528566386df', '', 'hi2', 1, 0, 'images/666c6234a4254807b73e134781ec282a_android-chrome-512x512.png', 0, 0, 1765188829, 1764854549),
-('e428fa103e6c41c5948c553b0a64b7b9', '', 'emil er zuper zød x4', 1, 0, '', 0, 0, 1765186451, 1764859321),
-('e4652c7659fa456babd12e27c33155d4', '', 'hi 2', 0, 0, '', 0, 0, 1764855574, 1764855567),
-('fca0b7f700de4682909ec8372744b8fd', '', 'jeg laver et post', 2, 0, '', 0, 0, 1765196210, 1764857775);
+('3480c1614d6f44d59534f5da6f38cf56', '9860c6174a3141c5b1e7c8b3638b2f2b', 'I don\'t know why, but I like sofas so much, I have made my profile picture a sofa-cushion :)', 2, 0, '', 0, 0, 0, 1765278686),
+('5c4a1ea51cc2472cbe27f030c2073b2e', 'b09b7853689b490a9c1e093b0507dc8b', 'I\'m so happy that Malthe finally spoke out about his love for sofas! Honesty is good!', 1, 0, '', 0, 0, 0, 1765278933),
+('85a3d8a9864b47298290aa90576b9285', '88a93bb5267e443eb0047f421a7a2f34', 'Hi. I\'m Gustav. I am a medieval time-traveller!', 0, 0, '', 0, 0, 0, 1765278640),
+('c4fa0640c5784ff1af6ac0ac06b03997', '12d6e25ee4a1401d9e5575d6319ce496', 'I\'m new to X, so be kind!', 1, 1, '', 0, 0, 0, 1765278470),
+('d7d810e76ed845a9aae051e0189495e7', 'a5d53c2b385341e88b644a1bbbd8e131', 'I\'m such a big Cristiano Ronaldo SUIIII fan!', 0, 1, 'images/294f19dc9b784be2a422368ca964f574_cristi.jpg', 0, 0, 0, 1765279953),
+('ebfce8bbac524094b3a9fa169f6eb029', '87df12f908664075aa97a68cb4f5280f', 'I\'m the president!!', 0, 0, '', 0, 0, 0, 1765280856),
+('fddbc0c31c63431e8fd5ff8fc63e7aea', 'a5d53c2b385341e88b644a1bbbd8e131', 'I swear to god, I hate Chelsea & Arsenal fans! They\'re so fucking stubborn GRRRRRR ARGHHH', 0, 0, '', 1765280414, 0, 0, 1765280365);
 
 -- --------------------------------------------------------
 
@@ -207,7 +195,14 @@ CREATE TABLE `trends` (
 --
 
 INSERT INTO `trends` (`trend_pk`, `trend_title`, `trend_message`) VALUES
+('6543c885d1af4ebcbd5280a4afaa1e2c', 'Computing & Software', 'Lenovo launch scroll-able screen laptops'),
+('6543c995d02f4ebcbd5280a4afaa1e2c', 'Sports', 'The World Cup will be hosted in USA for 2026'),
+('6543c995d1af423cbd5280a4afaa1e2c', 'World news', 'China enforces new bill to pass taxation laws'),
+('6543c995d1af4ebcb76280a4afaa1e2c', 'Education', 'KEA & CPH Business merge to be EK'),
 ('6543c995d1af4ebcbd5280a4afaa1e2c', 'Politics are rotten', 'Everyone talks and only a few try to do something'),
+('6543c995d1af4ebcbd52ola4afaa1e2c', 'War & politics', 'War is currently raging in Sudan'),
+('6543c995d1oa4ebcbd5280a4afaa1e2c', 'Stocks', 'Novo Stocks take a beating this morning'),
+('6543c995puaf4ebcbd5280a4afaa1e2c', 'Coding & design', 'PythonAnywhere servers are down'),
 ('8343c995d1af4ebcbd5280a6afaa1e2d', 'New rocket to the moon', 'A new rocket has been sent towards the moon, but id didn\'t make it');
 
 -- --------------------------------------------------------
@@ -236,14 +231,14 @@ CREATE TABLE `users` (
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`user_pk`, `user_email`, `user_password`, `user_username`, `user_first_name`, `user_last_name`, `user_avatar_path`, `user_verification_key`, `user_verified_at`, `user_deleted_at`, `user_is_admin`, `user_blocked_at`) VALUES
-('', 'r@r.dk', 'scrypt:32768:8:1$wnse70hQwhCvR9tC$724c32a91b5f277201afbb141f9293a93168327df5c9124f482d3c32b8dff991c41629f477dfaee021965f9b15318a4257aad2e933101a4c998ef3c346fc84e4', 'RasmusOlsen', 'Rasmus', '', 'static/images/avatars/avatar_1.jpg', '', 12321321, 0, 1, 0),
-('225a9fc15b8f409aa5c8ee7eafee516b', 'ralle147@hotmail.com', 'scrypt:32768:8:1$wnse70hQwhCvR9tC$724c32a91b5f277201afbb141f9293a93168327df5c9124f482d3c32b8dff991c41629f477dfaee021965f9b15318a4257aad2e933101a4c998ef3c346fc84e4', 'aTest', 'Tester', '', 'static/images/avatars/avatar_2.jpg', '', 455656, 0, 0, 1765107498),
-('6b48c6095913402eb4841529830e5415', 'a@a1.com', 'scrypt:32768:8:1$rRjuDGIwaA31YlPi$f73f9a059fb3757ba6724d9c94e2a192d8b8d59fcd18d7b11c57e508f1b9cfb94bb7c6fd4f8d632b777e31cd47aef9c95adcad2451786cbb7e7c073fe8cbaf3a', 'santiago1', 'Santiago', '', 'static/images/avatars/avatar_3.jpg', 'ee92b2c86a6c48569138a43ce8bc1d48', 0, 0, 0, 0),
-('805a39cd8c854ee8a83555a308645bf5', 'fullflaskdemomail@gmail.com', 'scrypt:32768:8:1$VlBgiW1xFsZuKRML$a5f61d62ac3f45d42c58cf8362637e717793b8760f026b1b47b7bfec47037abbe13e1c20e8bdc66fc03cc153d0bcf6185e15cf25ad58eb9d344267882dd7e78c', 'santiago', 'Santiago', '', 'static/images/avatars/avatar_4.jpg', '', 565656, 0, 0, 0),
-('88a93bb5267e443eb0047f421a7a2f34', 'santi@gmail.com', 'scrypt:32768:8:1$PEIO0eliDPqnCCbw$acb791128831bc90030ac363e4b76db196689bd99c1ccde5c2c20a7d4fe909e07129f3f4fd4f086e347375edbb8229e9ba5dc126cc14f6107fb1fc2abf6498f8', 'gustav', 'Gustav', '', 'static/images/avatars/f6262d530c0d46a48710087334157593.png', '', 54654564, 0, 0, 0),
-('9225aa8a911c44ff86a1598d852adb98', 'emil.johansson2@gmail.com', 'scrypt:32768:8:1$0OHMg1epYFs0bbh1$37a720ea2e75548e5fa043eeab4fad2691918a3eb21a021f613d03ff6e53ed8e61db9a3d205c3c7b867e7ca926dca25bb66610f91a304ef3178b068529e764dc', 'emil8883', 'emil', '', 'https://avatar.iran.liara.run/public/40', '', 1765200933, 1765201014, 0, 0),
-('9860c6174a3141c5b1e7c8b3638b2f2b', 'maltheaaen@gmail.com', 'scrypt:32768:8:1$5NSH8Gsqi83lQV24$b61989755f5e00e7632463dee7b806b93acab7d4de36b6e32caf47a2fcef8bf23db0624a3767d5bae3ba40c77673171dad51a4b472e44a9463fc141a0b7f37bb', 'Malt', 'Malthe', '', 'static/images/avatars/a646c5c464854943b27d7c07c0074fb8.png', '', 54654564, 0, 0, 0);
+INSERT INTO `users` (`user_pk`, `user_email`, `user_password`, `user_password_reset_key`, `user_username`, `user_first_name`, `user_last_name`, `user_avatar_path`, `user_verification_key`, `user_verified_at`, `user_deleted_at`, `user_is_admin`, `user_blocked_at`) VALUES
+('12d6e25ee4a1401d9e5575d6319ce496', 'dimidummy9@gmail.com', 'scrypt:32768:8:1$meYtqAjbJ8n8lH7D$3018ed792aac88da18034e27c83fde5ca0483a4c893d11c4e3ad33bad8679596236a818d2886d1634dafbbadb84deef600e755240d28260090394245f4f1cffc', '', 'DimiDev', 'Dimitrios', 'Baltzis', 'static/images/avatars/be2a92fe09ee44d386fe1d1b8639c31b.jpeg', '', 1765277199, 0, 0, 0),
+('4542f5410310486b9efecc4934e1a643', 'admin@admin.com', 'scrypt:32768:8:1$EFEjABUNz76czrxL$257fd3bbaaa2e7169dcb3dd291ba42fa16f20a7d20753577d81021f3ac2ed95c7f5925e7a92f8eecffb8dee5b8c060379f10e13f1911d99efcaf66e8f9f1323a', '', 'admin', 'Admin', 'AdminAdmin', 'static/images/avatars/unknown.jpg', '', 12321321, 0, 1, 0),
+('87df12f908664075aa97a68cb4f5280f', 'trump@gmail.com', 'scrypt:32768:8:1$SRkGmSc4UmG1PWo4$96a541a53c0945a1d5f4b8ebc2b2c1cf2f0b8cf749708547b71bb5ecfcaafc59706931ec5cb20fd538171467e93a80e9281aa8277f65d7cfd8881d17221a9fa6', '', 'POTUS', 'Donald', 'Trump', 'static/images/avatars/ca80cfeef9ed49948c3e48f8c3e78b6e.jpg', '', 1765277199, 0, 0, 1765281053),
+('88a93bb5267e443eb0047f421a7a2f34', 'santi@gmail.com', 'scrypt:32768:8:1$PEIO0eliDPqnCCbw$acb791128831bc90030ac363e4b76db196689bd99c1ccde5c2c20a7d4fe909e07129f3f4fd4f086e347375edbb8229e9ba5dc126cc14f6107fb1fc2abf6498f8', NULL, 'GustavDev', 'Gustav', 'Larsen', 'static/images/avatars/b03959e8afd84bdd9270fcaca03810d7.jpg', '', 54654564, 0, 0, 0),
+('9860c6174a3141c5b1e7c8b3638b2f2b', 'maltheaaen@gmail.com', 'scrypt:32768:8:1$5NSH8Gsqi83lQV24$b61989755f5e00e7632463dee7b806b93acab7d4de36b6e32caf47a2fcef8bf23db0624a3767d5bae3ba40c77673171dad51a4b472e44a9463fc141a0b7f37bb', NULL, 'Malt', 'Malthe', 'Aaen', 'static/images/avatars/a646c5c464854943b27d7c07c0074fb8.png', '', 54654564, 0, 0, 0),
+('a5d53c2b385341e88b644a1bbbd8e131', 'r@r.dk', 'scrypt:32768:8:1$0RU5B87Om1vuTrj5$19c6e65314a2bb8b96444834b1901e1cd38594bfaaf85ae378034f8978e0338ed0b7d3076d26545b0ed176fa1a10c503b4ff2f7807ac5164703cddc315d583fd', '', 'RasmusOlsen', 'Rasmus', 'Olsen', 'static/images/avatars/882972796125456fb54ec7ff1109804e.jpg', '', 1765277199, 0, 0, 0),
+('b09b7853689b490a9c1e093b0507dc8b', 'emil.johansson2@gmail.com', 'scrypt:32768:8:1$OGl7y8BaCfoVx7xc$7ed1d28e8ab742516d793102dc43d5056f59dcdb5a46689925702e3a41bee1a7a534a54dbbc08d98f8f10d80e306bc09f5826451e308284e1151b1636f3e305b', '', 'EmilDev', 'Emil', 'Johansson', 'static/images/avatars/b54e32cb4a054b1cb3b2da9821580653.jpg', '', 54654564, 0, 0, 0);
 
 --
 -- Indexes for dumped tables
@@ -260,7 +255,8 @@ ALTER TABLE `bookmarks`
 -- Indexes for table `comments`
 --
 ALTER TABLE `comments`
-  ADD PRIMARY KEY (`comment_pk`);
+  ADD PRIMARY KEY (`comment_pk`),
+  ADD KEY `comments_post_fk` (`comment_post_fk`);
 
 --
 -- Indexes for table `follows`
@@ -308,6 +304,12 @@ ALTER TABLE `users`
 ALTER TABLE `bookmarks`
   ADD CONSTRAINT `bookmarks_ibfk_1` FOREIGN KEY (`bookmark_user_fk`) REFERENCES `users` (`user_pk`) ON DELETE CASCADE,
   ADD CONSTRAINT `bookmarks_ibfk_2` FOREIGN KEY (`bookmark_post_fk`) REFERENCES `posts` (`post_pk`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `comments`
+--
+ALTER TABLE `comments`
+  ADD CONSTRAINT `comments_post_fk` FOREIGN KEY (`comment_post_fk`) REFERENCES `posts` (`post_pk`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `follows`
