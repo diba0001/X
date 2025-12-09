@@ -45,7 +45,8 @@
                 <li><a href="#"><i class="fa-regular fa-bell"></i><span>{{ x.lans("notifications") }}</span></a></li>
                 <li><a href="#"><i class="fa-regular fa-envelope"></i><span>{{ x.lans("messages") }}</span></a></li>
                 <li><a href="#"><i class="fa-solid fa-atom"></i><span>Grok</span></a></li>
-                <li><a href="/bookmarks-comp" mix-get><i class="fa-regular fa-bookmark"></i><span class="pointer-e-none">{{ x.lans("bookmarks") }}</span></a></li>
+                <li><a href="/bookmarks-comp" mix-get><i class="fa-regular fa-bookmark"></i><span
+                            class="pointer-e-none">{{ x.lans("bookmarks") }}</span></a></li>
                 <li><a href="#"><i class="fa-solid fa-briefcase"></i><span>{{ x.lans("jobs") }}</span></a></li>
                 <li><a href="#"><i class="fa-solid fa-users"></i><span>{{ x.lans("communities") }}</span></a></li>
                 <li><a href="#"><i class="fa-solid fa-star"></i><span>{{ x.lans("premium") }}</span></a></li>
@@ -73,9 +74,11 @@
                             x.lans("logout") }}</span></a></li>
             </ul>
 
-            <button class="post-btn">{{ x.lans("post") }}</button>
-
-            {% include "___nav_profile_tag.html" %}
+            <a href="/profile" mix-get>
+                <span class="pointer-e-none text-c-black">
+                    {% include "___nav_profile_tag.html" %}
+                </span>
+            </a>
         </nav>
 
         <main class="px-4 h-full">
