@@ -1584,45 +1584,45 @@ def api_create_post():
                 # Store just the filename for database
                 post_media_path = f"images/{unique_filename}"
         
-                db, cursor = x.db()
-                
-                q = """INSERT INTO posts 
-                    (post_pk, post_user_fk, post_message, post_total_likes, post_media_path, post_blocked_at, post_created_at, post_deleted_at, post_updated_at) 
-                    VALUES(%s, %s, %s, %s, %s, %s, %s, %s, 0)"""
-
-                cursor.execute(q, (
-                post_pk,
-                g.user["user_pk"],
-                post,
-                0,
-                post_media_path,
-                0,
-                current_epoch, 
-                0
-                ))
+        db, cursor = x.db()
         
-                db.commit()
-                
-                toast_ok = render_template("___toast_ok.html", message=x.lans('post_live'))
-                tweet = {
-                    "post_pk": post_pk,
-                    "post_user_fk": g.user["user_pk"] ,
-                    "user_first_name": g.user["user_first_name"],
-                    "user_last_name": g.user["user_last_name"],
-                    "user_username": g.user["user_username"],
-                    "user_avatar_path": g.user["user_avatar_path"],
-                    "post_message": post,
-                    "post_pk": post_pk,
-                    "post_media_path": post_media_path,
-                    "post_created_at": None
-                }
-                html_post_container = render_template("___post_container.html")
-                html_post = render_template("_tweet.html", tweet=tweet, user=g.user)
-                return f"""
-                    <browser mix-bottom="#toast">{toast_ok}</browser>
-                    <browser mix-top="#posts">{html_post}</browser>
-                    <browser mix-replace="#post_container">{html_post_container}</browser>
-                """
+        q = """INSERT INTO posts 
+            (post_pk, post_user_fk, post_message, post_total_likes, post_media_path, post_blocked_at, post_created_at, post_deleted_at, post_updated_at) 
+            VALUES(%s, %s, %s, %s, %s, %s, %s, %s, 0)"""
+
+        cursor.execute(q, (
+        post_pk,
+        g.user["user_pk"],
+        post,
+        0,
+        post_media_path,
+        0,
+        current_epoch, 
+        0
+        ))
+
+        db.commit()
+        
+        toast_ok = render_template("___toast_ok.html", message=x.lans('post_live'))
+        tweet = {
+            "post_pk": post_pk,
+            "post_user_fk": g.user["user_pk"] ,
+            "user_first_name": g.user["user_first_name"],
+            "user_last_name": g.user["user_last_name"],
+            "user_username": g.user["user_username"],
+            "user_avatar_path": g.user["user_avatar_path"],
+            "post_message": post,
+            "post_pk": post_pk,
+            "post_media_path": post_media_path,
+            "post_created_at": None
+        }
+        html_post_container = render_template("___post_container.html")
+        html_post = render_template("_tweet.html", tweet=tweet, user=g.user)
+        return f"""
+            <browser mix-bottom="#toast">{toast_ok}</browser>
+            <browser mix-top="#posts">{html_post}</browser>
+            <browser mix-replace="#post_container">{html_post_container}</browser>
+        """
     except Exception as ex:
         ic(ex)
         
