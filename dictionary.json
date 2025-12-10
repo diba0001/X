@@ -225,9 +225,9 @@
         "spanish": "Actualizando perfil..."
     },
     "loading": {
-        "english": "Loading...",
-        "danish": "Indlæser...",
-        "spanish": "Cargando..."
+        "english": "Loading",
+        "danish": "Henter",
+        "spanish": "Cargando"
     },
     "log_in_to_x": {
         "english": "Log in to X",
@@ -356,7 +356,7 @@
     },
     "admin_unblock": {
         "english": "Unblock",
-        "danish": "Fjern blokering",
+        "danish": "Unblock",
         "spanish": "Desbloquear"
     },
     "admin_no_users": {

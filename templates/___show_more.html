@@ -1,6 +1,6 @@
 <div id="show_more" class="w-full p-4 text-center">
     <a href="/api-get-posts?page={{ next_page }}" mix-get class="text-c-gray cursor-pointer">
-        Loading more tweets...
+        {{ x.lans("loading")}}...
     </a>
 </div>
 
@@ -8,24 +8,23 @@
     // Variable to prevent double-fetching
     let isLoading = false;
 
-    window.addEventListener("scroll", function() {
+    window.addEventListener("scroll", function () {
         const showMoreBtn = document.querySelector("#show_more a");
-        
+
         // 1. If no button exists (no more tweets), stop.
         if (!showMoreBtn) return;
 
         // 2. Get the position of the button
         const BtnPosition = showMoreBtn.getBoundingClientRect();
-        
+
         // 3. Check if button is visible in the viewport (or close to it)
         if (BtnPosition.top < window.innerHeight + 100) {
-            
+
             // 4. If we aren't already loading, click the button
             if (!isLoading) {
                 isLoading = true;
                 showMoreBtn.click();
-                showMoreBtn.innerText = "Loading..."; // Optional UI feedback
-                
+    
                 // Reset loading state after a short delay 
                 // (The button will actually be replaced by the server response, 
                 // so this variable resets for the NEW button)
