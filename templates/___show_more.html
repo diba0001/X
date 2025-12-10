@@ -24,8 +24,7 @@
             if (!isLoading) {
                 isLoading = true;
                 showMoreBtn.click();
-                showMoreBtn.innerText = "{{ x.lans('loading')}}..."; // Optional UI feedback
-
+    
                 // Reset loading state after a short delay 
                 // (The button will actually be replaced by the server response, 
                 // so this variable resets for the NEW button)
